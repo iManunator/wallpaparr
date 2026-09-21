@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="160" viewBox="0 0 720 160" role="img" aria-label="Wallpaparr">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f4d78a"/>
+      <stop offset="1" stop-color="#e2b657"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b1e27"/>
+      <stop offset="1" stop-color="#0c0d10"/>
+    </linearGradient>
+  </defs>
+  <rect width="720" height="160" rx="28" fill="url(#panel)"/>
+  <rect x="22" y="28" width="104" height="104" rx="26" fill="#14161c" stroke="#e2b657" stroke-width="2"/>
+  <path d="M48 96 L74 48 L100 96" fill="none" stroke="url(#gold)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="74" cy="108" r="6" fill="#7ad0c4"/>
+  <text x="148" y="78" fill="#f4efe6" font-family="Georgia, 'Times New Roman', serif" font-size="48">Wallpaparr</text>
+  <text x="150" y="112" fill="#9a9388" font-family="system-ui, sans-serif" font-size="16" letter-spacing="0.18em">LIVE WALLPAPERS FOR PROJECTIVY</text>
+</svg>

@@ -1,0 +1,12 @@
+.git
+.github
+data
+**/__pycache__
+**/.venv
+web/node_modules
+web/dist
+backend/tests
+plugin
+docs
+**/.pytest_cache
+**/.coverage

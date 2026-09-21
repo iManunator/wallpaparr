@@ -1,0 +1,42 @@
+# Secrets and local config
+.env
+config.json
+*.pem
+*.key
+
+# Runtime data
+data/
+backend/data/
+output/
+*.pyc
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.venv/
+.venv-test/
+venv/
+
+# Frontend
+web/node_modules/
+web/dist/
+web/coverage/
+
+# Android / Gradle
+plugin/.gradle/
+plugin/build/
+plugin/**/build/
+plugin/local.properties
+plugin/*.iml
+plugin/.idea/
+*.apk
+*.aab
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.log

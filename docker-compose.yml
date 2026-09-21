@@ -1,0 +1,41 @@
+# Wallpaparr — cinematic Projectivy wallpapers.
+# Local verify: `docker compose up --build` (or ./scripts/verify.sh).
+# pull_policy: build means Compose uses the Dockerfile even if GHCR is unpublished.
+# Published image: ghcr.io/imanunator/wallpaparr:latest (CI on main + v* Release).
+# To run GHCR instead of a local build: docker compose pull && docker compose up -d
+# (override pull_policy, or `docker run … ghcr.io/imanunator/wallpaparr:latest`).
+#
+# Copy `.env.example` → `.env` and set PUBLIC_BASE_URL to a LAN URL the TV can open.
+# Compose interpolates that value into the container; SUITE_* paths below are the
+# in-container defaults (bind-mount `./data:/data` to persist them).
+#
+# Optional non-root: set PUID/PGID in `.env` and chown ./data to that uid.
+# Default 0:0 is root — same as previous images, so existing bind-mounts keep working.
+services:
+  wallpaparr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/imanunator/wallpaparr:latest
+    pull_policy: build
+    container_name: wallpaparr
+    user: "${PUID:-0}:${PGID:-0}"
+    ports:
+      - "8787:8787"
+    environment:
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://127.0.0.1:8787}
+      SUITE_DATA: /data
+      SUITE_LAYOUTS: /data/layouts
+      SUITE_GALLERY: /data/gallery
+      SUITE_CONFIG: /data/config.json
+      WALLPAPARR_AUTH_USER: ${WALLPAPARR_AUTH_USER:-}
+      WALLPAPARR_AUTH_PASSWORD: ${WALLPAPARR_AUTH_PASSWORD:-}
+    volumes:
+      - ./data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:8787/api/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 45s
+    restart: unless-stopped

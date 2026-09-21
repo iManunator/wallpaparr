@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-label="Health dashboard placeholder">
+  <rect width="1280" height="720" fill="#0c0d10"/>
+  <text x="48" y="56" fill="#f4efe6" font-family="Georgia, serif" font-size="32">Health</text>
+  <text x="168" y="54" fill="#9a9388" font-family="system-ui, sans-serif" font-size="14">/api/dashboard · providers · last cron · motion</text>
+
+  <rect x="48" y="92" width="284" height="168" rx="18" fill="#14161c"/>
+  <text x="72" y="132" fill="#9a9388" font-family="system-ui, sans-serif" font-size="14">Gallery</text>
+  <text x="72" y="188" fill="#f4efe6" font-family="Georgia, serif" font-size="44">6</text>
+  <text x="72" y="228" fill="#87c38f" font-family="system-ui, sans-serif" font-size="13">demo catalog seeded</text>
+
+  <rect x="348" y="92" width="284" height="168" rx="18" fill="#14161c"/>
+  <text x="372" y="132" fill="#9a9388" font-family="system-ui, sans-serif" font-size="14">Cron</text>
+  <text x="372" y="188" fill="#f4efe6" font-family="Georgia, serif" font-size="40">never</text>
+  <text x="372" y="228" fill="#9a9388" font-family="system-ui, sans-serif" font-size="13">idle until you schedule</text>
+
+  <rect x="648" y="92" width="284" height="168" rx="18" fill="#14161c"/>
+  <text x="672" y="132" fill="#9a9388" font-family="system-ui, sans-serif" font-size="14">Motion</text>
+  <text x="672" y="188" fill="#e2b657" font-family="Georgia, serif" font-size="36">cinematic</text>
+  <text x="672" y="228" fill="#9a9388" font-family="system-ui, sans-serif" font-size="13">parallax · light-leak on</text>
+
+  <rect x="948" y="92" width="284" height="168" rx="18" fill="#14161c"/>
+  <text x="972" y="132" fill="#9a9388" font-family="system-ui, sans-serif" font-size="14">Taste</text>
+  <text x="972" y="188" fill="#7ad0c4" font-family="Georgia, serif" font-size="36">tonight</text>
+  <text x="972" y="228" fill="#9a9388" font-family="system-ui, sans-serif" font-size="13">50 / 30 / 20 mix</text>
+
+  <rect x="48" y="284" width="584" height="360" rx="18" fill="#14161c"/>
+  <text x="72" y="328" fill="#f4efe6" font-family="Georgia, serif" font-size="22">Providers</text>
+  <text x="72" y="372" fill="#9a9388" font-family="system-ui, sans-serif" font-size="15">Jellyfin</text>
+  <text x="220" y="372" fill="#e2b657" font-family="system-ui, sans-serif" font-size="15">optional · LAN URL</text>
+  <text x="72" y="412" fill="#9a9388" font-family="system-ui, sans-serif" font-size="15">Jellyseerr / Seerr</text>
+  <text x="280" y="412" fill="#e2b657" font-family="system-ui, sans-serif" font-size="15">optional · requests + trending</text>
+  <text x="72" y="452" fill="#9a9388" font-family="system-ui, sans-serif" font-size="15">TMDB</text>
+  <text x="220" y="452" fill="#e2b657" font-family="system-ui, sans-serif" font-size="15">optional · artwork fallback</text>
+  <text x="72" y="492" fill="#9a9388" font-family="system-ui, sans-serif" font-size="15">Demo catalog</text>
+  <text x="220" y="492" fill="#87c38f" font-family="system-ui, sans-serif" font-size="15">always on · Northlight seed</text>
+  <text x="72" y="552" fill="#9a9388" font-family="system-ui, sans-serif" font-size="13">No Jellyfin required to verify. PUBLIC_BASE_URL must be a LAN URL the TV can open.</text>
+
+  <rect x="648" y="284" width="584" height="360" rx="18" fill="#14161c"/>
+  <text x="672" y="328" fill="#f4efe6" font-family="Georgia, serif" font-size="22">Smart queues</text>
+  <text x="672" y="380" fill="#9a9388" font-family="system-ui, sans-serif" font-size="16">Unwatched</text>
+  <text x="980" y="380" fill="#f4efe6" font-family="Georgia, serif" font-size="20">2</text>
+  <text x="672" y="424" fill="#9a9388" font-family="system-ui, sans-serif" font-size="16">Continue watching</text>
+  <text x="980" y="424" fill="#f4efe6" font-family="Georgia, serif" font-size="20">1</text>
+  <text x="672" y="468" fill="#9a9388" font-family="system-ui, sans-serif" font-size="16">Newly added</text>
+  <text x="980" y="468" fill="#f4efe6" font-family="Georgia, serif" font-size="20">6</text>
+  <text x="672" y="512" fill="#9a9388" font-family="system-ui, sans-serif" font-size="16">Requestable</text>
+  <text x="980" y="512" fill="#f4efe6" font-family="Georgia, serif" font-size="20">1</text>
+  <text x="672" y="556" fill="#9a9388" font-family="system-ui, sans-serif" font-size="16">Pinned</text>
+  <text x="980" y="556" fill="#f4efe6" font-family="Georgia, serif" font-size="20">1</text>
+  <text x="672" y="608" fill="#9a9388" font-family="system-ui, sans-serif" font-size="13">Hidden titles never enter GET /api/wallpaper/status</text>
+
+  <text x="48" y="698" fill="#9a9388" font-family="system-ui, sans-serif" font-size="12">Placeholder UI capture — numbers from a demo seed, not a live Jellyfin library</text>
+</svg>
