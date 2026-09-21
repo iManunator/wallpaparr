@@ -382,6 +382,18 @@ function SettingsPage({ onTheme }: { onTheme: (theme: string) => void }) {
     api.layouts().then(setLayouts).catch(() => undefined);
   }, []);
   if (!settings) return <p>Loading…</p>;
+  async function saveSettings() {
+    try {
+      await api.saveSettings(settings!);
+      setMsg("Saved settings");
+      notify("ok", "Saved settings");
+      onTheme(settings!.editor_theme || "cinema");
+    } catch (err) {
+      const toast = errorToast(err, "Could not save settings");
+      notify(toast.kind, toast.text);
+      setMsg(toast.text);
+    }
+  }
   function patch(section: "jellyfin" | "jellyseerr" | "tmdb" | "omdb", key: string, value: string) {
     setSettings({
       ...settings!,
@@ -399,7 +411,7 @@ function SettingsPage({ onTheme }: { onTheme: (theme: string) => void }) {
       seerr_category: "trending",
       skip_existing: true,
       replace_existing: false,
-      refresh_status: false,
+      refresh_status: true,
       cleanup: true,
       motion: false,
       limit: 20,
@@ -961,27 +973,15 @@ function SettingsPage({ onTheme }: { onTheme: (theme: string) => void }) {
             <button className="btn ghost tiny" onClick={() => addCronJob()}>
               Add cron job
             </button>
+            <button className="btn tiny" onClick={saveSettings}>
+              Save settings
+            </button>
           </div>
         </div>
         </>
         )}
       </div>
-      <button
-        className="btn"
-        style={{ marginTop: 18 }}
-        onClick={async () => {
-          try {
-            await api.saveSettings(settings);
-            setMsg("Saved settings");
-            notify("ok", "Saved settings");
-            onTheme(settings.editor_theme || "cinema");
-          } catch (err) {
-            const toast = errorToast(err, "Could not save settings");
-            notify(toast.kind, toast.text);
-            setMsg(toast.text);
-          }
-        }}
-      >
+      <button className="btn" style={{ marginTop: 18 }} onClick={saveSettings}>
         Save settings
       </button>
       {msg && <p className="status">{msg}</p>}

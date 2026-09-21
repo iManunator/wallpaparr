@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Cleanup no longer deletes wallpapers from other sources.** Running "Cleanup titles no longer in the source list" for one source (e.g. Jellyfin) was also wiping every Seerr-sourced wallpaper in that layout, and vice versa, because cleanup only scoped by layout, not by the source it actually fetched this run.
+- Cron schedules now default "Refresh when watch / availability changes" on, same as Generate.
+- Settings → Cron / batch has its own "Save settings" button next to "Add cron job", so you don't have to scroll to the bottom of the page after editing schedules.
+
 ## 1.0.0 - 2026-09-21
 
 Initial public release.

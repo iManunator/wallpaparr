@@ -32,6 +32,20 @@ def test_cleanup_drops_titles_not_in_current_list():
     assert [d.id for d in doomed] == ["drop"]
 
 
+def test_cleanup_does_not_touch_other_sources():
+    """Running cleanup for one source (e.g. Jellyfin) must not delete
+    wallpapers that came from a different source (e.g. Jellyseerr) in the
+    same layout — they were never part of this batch's fetch."""
+    catalog = [
+        WallpaperRecord(id="jf-keep", layout="A", filename="a.jpg", title="JF Keep", jellyfin_id="1", source="jellyfin"),
+        WallpaperRecord(id="jf-drop", layout="A", filename="b.jpg", title="JF Drop", jellyfin_id="2", source="jellyfin"),
+        WallpaperRecord(id="seerr-untouched", layout="A", filename="c.jpg", title="Seerr Title", tmdb_id="90004", source="jellyseerr"),
+    ]
+    current = [MediaItem(title="JF Keep", jellyfin_id="1", source="jellyfin")]
+    doomed = records_to_cleanup(catalog, current, "A")
+    assert [d.id for d in doomed] == ["jf-drop"]
+
+
 def test_status_changed_watch_and_availability():
     rec = WallpaperRecord(
         id="1",
