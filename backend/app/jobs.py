@@ -113,7 +113,7 @@ def _job_kwargs(job: dict | None) -> dict:
         "refresh_status": bool(spec.get("refresh_status", False)),
         "cleanup": bool(spec.get("cleanup", False)),
         "motion": bool(spec.get("motion", False)),
-        "limit": int(spec.get("limit") or 20),
+        "limit": min(200, max(1, int(spec.get("limit") or 20))),
         "ids": list(ids),
         "skip_ids": list(skip_ids),
         "seerr_category": str(spec.get("seerr_category") or "trending"),
@@ -133,7 +133,18 @@ def _run_job(job_id: str | None = None, **kwargs) -> dict:
     from app.ops import record_event
 
     request = GenerateRequest(**{k: v for k, v in kwargs.items() if k in GenerateRequest.model_fields})
-    result = run_generate(request, job_id=job_id)
+    try:
+        result = run_generate(request, job_id=job_id)
+    except Exception as exc:
+        record_event(
+            "cron",
+            {
+                "layout": request.layout,
+                "ok": False,
+                "error": str(exc)[:500],
+            },
+        )
+        raise
     record_event(
         "cron",
         {

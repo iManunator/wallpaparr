@@ -17,7 +17,8 @@ CONFIG_PATH = Path(os.environ.get("SUITE_CONFIG", DATA_DIR / "config.json"))
 CATALOG_PATH = Path(os.environ.get("SUITE_CATALOG", DATA_DIR / "catalog.json"))
 
 # GET /api/settings never returns live provider keys. POST treats this sentinel
-# (or a blank field) as "keep the stored key"; a new non-blank value replaces it.
+# as "keep the stored key". A blank field still *clears* the stored key; a new
+# non-blank value replaces it. ``None`` / omitted also keeps the stored key.
 REDACTED_API_KEY = "********"
 _PROVIDER_SECTIONS = ("jellyfin", "jellyseerr", "tmdb", "omdb")
 

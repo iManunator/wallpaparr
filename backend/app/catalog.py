@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 import shutil
+import threading
 from pathlib import Path
 
 from app.config import CATALOG_PATH, GALLERY_DIR, ensure_dirs
@@ -12,6 +13,7 @@ from app.fsutil import write_text_atomic
 from app.models import WallpaperRecord
 
 _SAFE = re.compile(r"[^A-Za-z0-9._ -]+")
+_LOCK = threading.Lock()
 
 
 def safe_name(value: str) -> str:
@@ -26,7 +28,7 @@ def layout_dir(layout: str, *, create: bool = True) -> Path:
     return path
 
 
-def load_catalog() -> list[WallpaperRecord]:
+def _load_unlocked() -> list[WallpaperRecord]:
     ensure_dirs()
     if not CATALOG_PATH.is_file():
         return []
@@ -45,21 +47,37 @@ def load_catalog() -> list[WallpaperRecord]:
     return records
 
 
-def save_catalog(records: list[WallpaperRecord]) -> None:
+def load_catalog() -> list[WallpaperRecord]:
+    with _LOCK:
+        return _load_unlocked()
+
+
+def _save_unlocked(records: list[WallpaperRecord]) -> None:
     ensure_dirs()
     payload = [item.model_dump() for item in records]
     write_text_atomic(CATALOG_PATH, json.dumps(payload, indent=2))
 
 
+def save_catalog(records: list[WallpaperRecord]) -> None:
+    with _LOCK:
+        _save_unlocked(records)
+
+
 def upsert(record: WallpaperRecord) -> list[WallpaperRecord]:
-    catalog = [item for item in load_catalog() if item.id != record.id]
-    catalog.append(record)
-    save_catalog(catalog)
-    return catalog
+    with _LOCK:
+        catalog = [item for item in _load_unlocked() if item.id != record.id]
+        catalog.append(record)
+        _save_unlocked(catalog)
+        return catalog
 
 
-def remove_records(ids: set[str]) -> list[WallpaperRecord]:
-    return delete_records(ids)["kept"]
+def remove_records(
+    ids: set[str],
+    *,
+    delete_files: bool = True,
+    keep_files: set[str] | None = None,
+) -> list[WallpaperRecord]:
+    return delete_records(ids, delete_files=delete_files, keep_files=keep_files)["kept"]
 
 
 def _companion_paths(jpg: Path) -> list[Path]:
@@ -71,30 +89,55 @@ def _companion_paths(jpg: Path) -> list[Path]:
     ]
 
 
-def delete_records(ids: set[str]) -> dict:
+def _gallery_filename(filename: str) -> str | None:
+    """Basename only — catalog rows must not be able to escape the layout folder."""
+    name = Path(str(filename or "")).name
+    if not name or name in {".", ".."}:
+        return None
+    return name
+
+
+def delete_records(
+    ids: set[str],
+    *,
+    delete_files: bool = True,
+    keep_files: set[str] | None = None,
+) -> dict:
     """Remove catalog rows and their JPEG / MP4 companions. Returns kept + deleted."""
     wanted = {str(item) for item in ids if item}
-    catalog = load_catalog()
-    keep: list[WallpaperRecord] = []
-    deleted: list[str] = []
-    files: list[str] = []
-    titles: list[str] = []
-    errors: list[str] = []
-    for rec in catalog:
-        if rec.id not in wanted:
-            keep.append(rec)
-            continue
-        jpg = layout_dir(rec.layout) / rec.filename
-        for path in _companion_paths(jpg):
-            try:
-                if path.is_file():
-                    path.unlink()
-                    files.append(path.name)
-            except OSError as exc:
-                errors.append(f"{path.name}: {exc}")
-        deleted.append(rec.id)
-        titles.append(rec.title)
-    save_catalog(keep)
+    keep_names = {_gallery_filename(name) for name in (keep_files or set())}
+    keep_names.discard(None)
+    with _LOCK:
+        catalog = _load_unlocked()
+        keep: list[WallpaperRecord] = []
+        deleted: list[str] = []
+        files: list[str] = []
+        titles: list[str] = []
+        errors: list[str] = []
+        for rec in catalog:
+            if rec.id not in wanted:
+                keep.append(rec)
+                continue
+            if delete_files:
+                name = _gallery_filename(rec.filename)
+                if name and name not in keep_names:
+                    folder = layout_dir(rec.layout, create=False)
+                    if folder.is_dir():
+                        folder_resolved = folder.resolve()
+                        jpg = folder / name
+                        for path in _companion_paths(jpg):
+                            try:
+                                resolved = path.resolve()
+                                if not resolved.is_relative_to(folder_resolved):
+                                    continue
+                                if resolved.is_file():
+                                    resolved.unlink()
+                                    files.append(path.name)
+                            except OSError as exc:
+                                errors.append(f"{path.name}: {exc}")
+            deleted.append(rec.id)
+            titles.append(rec.title)
+        _save_unlocked(keep)
     missing = sorted(wanted - set(deleted))
     return {
         "kept": keep,
@@ -168,7 +211,13 @@ def wallpaper_file(layout: str, filename: str) -> Path | None:
 
 
 def copy_into_gallery(src: Path, layout: str, filename: str) -> Path:
-    dest = layout_dir(layout) / filename
+    name = _gallery_filename(filename)
+    if not name:
+        raise ValueError("Invalid filename")
+    dest = layout_dir(layout) / name
     dest.parent.mkdir(parents=True, exist_ok=True)
+    folder_resolved = layout_dir(layout, create=False).resolve()
+    if not dest.resolve().is_relative_to(folder_resolved):
+        raise ValueError("Invalid filename")
     shutil.copy2(src, dest)
     return dest

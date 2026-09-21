@@ -71,3 +71,29 @@ def test_config_example_tracks_app_settings_defaults():
     assert example.motion_edge_fade == defaults.motion_edge_fade
     assert example.motion_fly_in == defaults.motion_fly_in
     assert "api_key" in example.omdb
+
+
+def test_delete_records_does_not_follow_filename_traversal(suite_dirs):
+    catalog_mod = suite_dirs["catalog_mod"]
+    victim = suite_dirs["data"] / "secret.txt"
+    victim.write_text("keep", encoding="utf-8")
+    rec = WallpaperRecord(
+        id="evil",
+        layout="Netflix Hero",
+        filename="../../secret.txt",
+        title="Nope",
+    )
+    catalog_mod.save_catalog([rec])
+    catalog_mod.delete_records({"evil"})
+    assert victim.read_text(encoding="utf-8") == "keep"
+    assert catalog_mod.load_catalog() == []
+
+
+def test_delete_records_does_not_mkdir_missing_layout(suite_dirs):
+    catalog_mod = suite_dirs["catalog_mod"]
+    gallery: Path = suite_dirs["gallery"]
+    rec = WallpaperRecord(id="ghost", layout="Ghost Layout", filename="x.jpg", title="Ghost")
+    catalog_mod.save_catalog([rec])
+    catalog_mod.delete_records({"ghost"})
+    assert not (gallery / "Ghost Layout").exists()
+    assert catalog_mod.load_catalog() == []

@@ -98,7 +98,7 @@ Open **http://127.0.0.1:8787** on the host. Tonight is the home page. Nothing co
 
 Give `PUBLIC_BASE_URL` (and the plugin's Server URL) the host's LAN IP or a hostname the TV can resolve. `127.0.0.1` / `localhost` only works from the host itself; the TV can't loop back into your laptop. Browsing the UI from the host is fine on loopback.
 
-There's no login. Settings, generate, and delete are open on purpose — this is a home-LAN box. Don't put `:8787` on the internet unless you've put auth on a reverse proxy in front of it.
+There's no login by default. Settings, generate, and delete are open on a home LAN. Optional HTTP basic auth: set `WALLPAPARR_AUTH_USER` and `WALLPAPARR_AUTH_PASSWORD` (plugin wallpaper GETs stay open so the TV still works). Don't put `:8787` on the internet without that or a reverse proxy in front of it.
 
 Compose, building from source, or parking the gallery on a different disk: **[docs/INSTALL.md](docs/INSTALL.md)**.
 

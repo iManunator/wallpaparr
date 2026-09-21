@@ -152,7 +152,7 @@ class WallpaperStatus(BaseModel):
 class GenerateRequest(BaseModel):
     layout: str = "Netflix Hero"
     source: str = "demo"
-    limit: int = 8
+    limit: int = Field(default=8, ge=1, le=200)
     skip_existing: bool = True
     replace_existing: bool = False
     refresh_status: bool = False

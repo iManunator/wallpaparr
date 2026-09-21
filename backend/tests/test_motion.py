@@ -551,10 +551,21 @@ def test_fly_in_boost_decays_to_exactly_zero_at_window_end():
     assert fly_in_boost(60, profile) == 0.0
 
 
-def test_fly_in_boost_disabled_by_default():
-    profile = MotionProfile()
+def test_fly_in_boost_can_be_disabled():
+    profile = MotionProfile(fly_in=False)
     assert profile.fly_in is False
     assert fly_in_boost(0, profile) == 0.0
+
+
+def test_motion_profile_dataclass_defaults_match_app_settings():
+    profile = MotionProfile()
+    defaults = profile_from_settings(AppSettings())
+    assert profile.fps == defaults.fps == 24
+    assert profile.duration == defaults.duration == 15.0
+    assert profile.fly_in is True
+    assert profile.edge_fade is True
+    assert profile.edge_fade_seconds == 1.0
+    assert profile.intensity == intensity_from_preset("balanced")
 
 
 def test_fly_in_zooms_in_further_at_start_than_normal_curve():

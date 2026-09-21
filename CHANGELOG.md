@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Replace/generate no longer deletes the previous still before the new JPEG is on disk (a render failure used to wipe the title). Still-only replace also removes a leftover sibling MP4 so the TV cannot keep playing stale motion.
+- Gallery delete confines filenames with `Path.name` (same as wallpaper GET) and no longer mkdir's empty layout folders as a side effect of delete.
+- Jellyfin API keys are attached only when the artwork URL's origin matches the configured server — a lookalike host no longer receives the MediaBrowser token.
+- Catalog/settings/ops atomic writes use unique temp names (no same-pid collision) and fsync before rename.
+- `MotionProfile()` encode defaults now match `AppSettings` (24 fps, 15s, balanced intensity, fly-in on, 1.0s edge fade).
+- HTTP fetches reject non-http(s) URLs and cap response size. Generate `limit` is 1–200.
+- Cron generate failures are recorded on the dashboard (`cron.last.ok: false`) instead of only raising in the scheduler thread.
+- Optional HTTP basic auth via `WALLPAPARR_AUTH_USER` / `WALLPAPARR_AUTH_PASSWORD` (plugin wallpaper GETs stay open). Compose documents optional `PUID`/`PGID` (default 0:0).
+- Docs: POST blank API key clears (does not keep); ids search pulls 200 titles, not 40.
+
 - Motion bake fallbacks now match `AppSettings` (24 fps, balanced, 15s loop, fly-in on) instead of the old 30 fps / cinematic / quality-duration tables when a field is missing.
 - Invalid cron expressions are rejected on save and listed on the dashboard instead of being skipped with no warning.
 - `GET /api/settings` redacts provider API keys; a round-trip save keeps the stored secret unless you type a new one (or clear the field).

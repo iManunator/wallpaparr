@@ -100,7 +100,7 @@ Compatible with the older TV Background Suite plugin (`imageUrl`, `actionUrl`, `
   "path": "northlight-demo.jpg",
   "layout": "Netflix Hero",
   "parallaxStyle": "parallax",
-  "motionDuration": 12.0,
+  "motionDuration": 15.0,
   "queue": "unwatched",
   "pinned": false,
   "watchState": "unwatched"

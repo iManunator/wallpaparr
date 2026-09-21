@@ -89,18 +89,21 @@ def intensity_from_preset(name: str | None) -> float:
 
 @dataclass(frozen=True)
 class MotionProfile:
+    # Defaults match AppSettings / profile_from_settings so a bare
+    # ``MotionProfile()`` (and generate_motion's no-profile fallback) cannot
+    # silently encode 30 fps / 12s / fly-in-off while Settings says 24/15/on.
     style: str = "parallax"
     quality: str = "light"
-    intensity: float = 0.55
-    duration: float = 12.0
-    fps: int = 30
+    intensity: float = INTENSITY_PRESETS["balanced"]
+    duration: float = _DEFAULT_LOOP_SECONDS
+    fps: int = _DEFAULT_FPS
     width: int = 1920
     height: int = 1080
     light_leak: bool = True
     edge_fade: bool = True
-    edge_fade_seconds: float = 0.35
-    fly_in: bool = False
-    fly_in_seconds: float = 1.0
+    edge_fade_seconds: float = _DEFAULT_EDGE_FADE_SECONDS
+    fly_in: bool = True
+    fly_in_seconds: float = _FLY_IN_SECONDS
     pan_x_sign: int = 1
     pan_y_sign: int = 1
     pan_y_ratio: float = _DEFAULT_PAN_Y_RATIO

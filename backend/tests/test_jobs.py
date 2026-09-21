@@ -67,3 +67,28 @@ def test_cron_parse_error_detects_garbage():
         ]
     )
     assert [row["name"] for row in errors] == ["Bad"]
+
+
+def test_run_job_records_failure(suite_dirs, monkeypatch):
+    import pytest
+
+    from app import jobs as jobs_mod
+    from app.ops import load_ops
+
+    def boom(*_args, **_kwargs):
+        raise RuntimeError("bake died")
+
+    monkeypatch.setattr(jobs_mod, "run_generate", boom)
+    with pytest.raises(RuntimeError, match="bake died"):
+        jobs_mod._run_job(layout="Netflix Hero", source="demo", limit=1)
+    ops = load_ops()
+    assert ops["cron"]["ok"] is False
+    assert "bake died" in ops["cron"]["error"]
+
+
+def test_job_kwargs_clamps_limit():
+    from app.jobs import _job_kwargs
+
+    assert _job_kwargs({"limit": 9999})["limit"] == 200
+    assert _job_kwargs({"limit": 1})["limit"] == 1
+    assert _job_kwargs({})["limit"] == 20

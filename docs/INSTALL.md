@@ -44,7 +44,7 @@ cp .env.example .env                      # PUBLIC_BASE_URL must be a LAN URL th
 docker compose up --build -d
 ```
 
-Open `http://YOUR_LAN_IP:8787`. `config.example.json` matches the server's default settings (taste mix, motion preset, OMDb key slot). `.env.example` documents `PUBLIC_BASE_URL` plus optional `SUITE_*` container paths.
+Open `http://YOUR_LAN_IP:8787`. `config.example.json` matches the server's default settings (taste mix, motion preset, OMDb key slot). `.env.example` documents `PUBLIC_BASE_URL`, optional `WALLPAPARR_AUTH_*` basic auth, optional `PUID`/`PGID` (default `0:0` / root so existing `./data` bind-mounts keep working), plus optional `SUITE_*` container paths.
 
 ### Storing the gallery (stills + MP4s) on a different disk
 

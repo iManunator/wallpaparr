@@ -45,7 +45,7 @@ Response:
   "pool": "unwatched",
   "layout": "Netflix Hero",
   "parallaxStyle": "parallax",
-  "motionDuration": 12.0,
+  "motionDuration": 15.0,
   "queue": "unwatched",
   "pinned": false,
   "watchState": "unwatched",
@@ -87,13 +87,13 @@ Compatibility: `imageUrl`, `actionUrl`, and `path` are unchanged from tvbgsuite.
 | GET | `/api/jobs/{id}` | Job snapshot: `status`, `done`, `total`, `current`, `percent`, `message`, `result` |
 | POST | `/api/wallpaper/generate-motion` | Bake parallax/Ken Burns MP4s for a layout (layered plate + locked chrome). Query `path=` (filename) to bake one title (tonight’s pick). Additive `layered` / `chrome_locked` on the JSON result. |
 | POST | `/api/cron/run` | Run a cron-shaped generate immediately. Body is the job flags (layout, source, skip/replace/cleanup/ids/motion). Returns the same `{ message, created, skipped, … }` as `/api/generate`. |
-| GET/POST | `/api/settings` | Providers, cron, motion style/preset/intensity/duration/light-leak/`motion_vary`, taste profile, overlay flags, editor theme, default `title_display`. GET redacts provider `api_key` values (`********`); POST keeps the stored key if the field is blank or still the sentinel. |
+| GET/POST | `/api/settings` | Providers, cron, motion style/preset/intensity/duration/light-leak/`motion_vary`, taste profile, overlay flags, editor theme, default `title_display`. GET redacts provider `api_key` values (`********`); POST keeps the stored key if the field is still the sentinel (or omitted). A blank field **clears** the stored key. |
 | POST | `/api/settings/test/{jellyfin\|jellyseerr\|tmdb}` | Connectivity |
 
 `POST /api/settings/test/{jellyfin|jellyseerr|tmdb|demo}` returns `{ ok, server?, error?, provider, message }` where `message` is toast copy (“Connected to Jellyfin (Living Room)” / “Could not reach Jellyfin: …”).
 
-Mutating routes (settings, generate, delete, cron) have no login. That's on purpose for a trusted home LAN; put auth on a reverse proxy if `:8787` is reachable off-LAN. The plugin only needs `GET /api/wallpaper/status`.
+Mutating routes (settings, generate, delete, cron) have no login by default. Optional HTTP basic auth: set `WALLPAPARR_AUTH_USER` and `WALLPAPARR_AUTH_PASSWORD`. When set, the web UI and mutating APIs require that password; plugin GETs (`/api/wallpaper/status`, `/api/wallpaper/image/…`, layout/genre/year lists) and `/api/health` stay open so the TV and Docker healthcheck still work. A reverse proxy in front of `:8787` is still the right move if the port is reachable off-LAN.
 
-`POST /api/generate` downloads artwork before compositing. For Jellyfin that is **Backdrop**, then **Primary** poster, using the same MediaBrowser token as the library call. Clearlogos come from Jellyfin **Logo**, then TMDB `images.logos` (English / null iso, PNG with alpha) for Seerr-shaped titles. Non-image bodies are skipped. Layout DNA field `title_display` is `auto` | `logo` | `text` (auto = logo if fetched, else the name). If neither image is reachable, demo titles use bundled stills; other titles fall back to the synthetic gradient. Unconfigured Jellyfin/Seerr uses the demo catalog and sets `warnings`. The JSON also includes `message`, `failed`, and `warnings` for the web UI toasts. `ids` search pulls at least 40 titles so a requested id is not missed because it sat past `limit`.
+`POST /api/generate` downloads artwork before compositing. `limit` is 1–200 (default 8). For Jellyfin that is **Backdrop**, then **Primary** poster, using the same MediaBrowser token as the library call. Clearlogos come from Jellyfin **Logo**, then TMDB `images.logos` (English / null iso, PNG with alpha) for Seerr-shaped titles. Non-image bodies are skipped. Layout DNA field `title_display` is `auto` | `logo` | `text` (auto = logo if fetched, else the name). If neither image is reachable, demo titles use bundled stills; other titles fall back to the synthetic gradient. Unconfigured Jellyfin/Seerr uses the demo catalog and sets `warnings`. The JSON also includes `message`, `failed`, and `warnings` for the web UI toasts. `ids` search pulls at least 200 titles so a requested id is not missed because it sat past `limit`.
 
 The editor does not go fullscreen: it loads `/api/media/artwork/{item_id}` onto the in-page 16:9 stage (demo catalog or Jellyfin) and `/api/media/logo/{item_id}` when `title_display` is `auto` or `logo`. Layout JSON now persists `title_display`, `logo_padding`, `show_watch_badge`, `show_seerr_badge`, `dna_revision`, gradient fields, vignette, and overlays. Bundled presets refresh geometry when `dna_revision` is behind the suite (Netflix Hero is the gold lock) while logo/text/auto and badge flags are kept; user copies (`preset: false`) are never overwritten. Gallery stills open in a lightbox with pin / never-show / delete. The gallery toolbar can select all, delete selected, or delete all (pins skipped unless `include_pins`). Generate, cron, and motion bake expose progress on `/api/jobs`.

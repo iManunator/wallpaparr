@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 
+import pytest
 from PIL import Image
 
 from app.models import GenerateRequest, MediaItem
@@ -430,4 +431,99 @@ def test_run_generate_refreshes_when_status_changes(suite_dirs, monkeypatch):
     assert refreshed["refreshed"] == ["Show"]
     assert refreshed["created"] == ["Show"]
     assert calls == [{"replace": True, "watch": "watched"}]
+
+
+def test_headers_for_url_requires_same_origin(suite_dirs):
+    from app.config import save_settings
+    from app.generate import _headers_for_url
+    from app.models import AppSettings
+
+    save_settings(AppSettings(jellyfin={"url": "http://jf:8096", "api_key": "secret", "user_id": "u"}))
+    assert _headers_for_url("http://jf:8096/Items/1/Images/Backdrop") is not None
+    assert _headers_for_url("http://jf:8096.evil.example/Items/1/Images/Backdrop") is None
+    assert _headers_for_url("http://jf:80960/Items/1/Images/Backdrop") is None
+    assert _headers_for_url("https://jf:8096/Items/1/Images/Backdrop") is None
+    assert _headers_for_url("file:///etc/passwd") is None
+
+
+def test_generate_one_keeps_previous_still_if_render_fails(suite_dirs, monkeypatch):
+    from app import generate as generate_mod
+    from app.generate import generate_one
+    from app.models import MediaItem, WallpaperRecord
+
+    catalog_mod = suite_dirs["catalog_mod"]
+    dest_dir = suite_dirs["gallery"] / "Netflix Hero"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    jpg = dest_dir / "keep-me-jf-keep.jpg"
+    jpg.write_bytes(b"\xff\xd8\xff" + b"\x00" * 32)
+    catalog_mod.upsert(
+        WallpaperRecord(
+            id="old",
+            layout="Netflix Hero",
+            filename=jpg.name,
+            title="Keep Me",
+            jellyfin_id="jf-keep",
+        )
+    )
+
+    def boom(*_args, **_kwargs):
+        raise RuntimeError("paint failed")
+
+    monkeypatch.setattr(generate_mod, "render_still", boom)
+    item = MediaItem(title="Keep Me", jellyfin_id="jf-keep", source="jellyfin")
+    with pytest.raises(RuntimeError, match="paint failed"):
+        generate_one(item, "Netflix Hero", http_get=lambda _url: _jpeg((10, 10, 10)))
+    assert jpg.is_file()
+    assert any(rec.id == "old" for rec in catalog_mod.load_catalog())
+
+
+def test_still_only_replace_removes_stale_mp4(suite_dirs):
+    from app.generate import _filename_for, generate_one
+    from app.models import MediaItem, WallpaperRecord
+
+    catalog_mod = suite_dirs["catalog_mod"]
+    item = MediaItem(title="Stale Loop", jellyfin_id="jf-stale", source="jellyfin")
+    filename = _filename_for(item)
+    dest_dir = suite_dirs["gallery"] / "Netflix Hero"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    jpg = dest_dir / filename
+    jpg.write_bytes(b"\xff\xd8\xff" + b"\x00" * 32)
+    mp4 = jpg.with_suffix(".mp4")
+    mp4.write_bytes(b"\x00" * 1500)
+    catalog_mod.upsert(
+        WallpaperRecord(
+            id="old-loop",
+            layout="Netflix Hero",
+            filename=filename,
+            title=item.title,
+            jellyfin_id=item.jellyfin_id,
+            has_video=True,
+        )
+    )
+    record = generate_one(item, "Netflix Hero", motion=False, http_get=lambda _url: _jpeg((12, 14, 18)))
+    assert record is not None
+    assert not mp4.exists()
+    assert record.has_video is False
+    rows = [rec for rec in catalog_mod.load_catalog() if rec.jellyfin_id == "jf-stale"]
+    assert len(rows) == 1
+
+
+def test_regenerate_does_not_duplicate_catalog_rows(suite_dirs):
+    from app.generate import generate_one
+    from app.models import MediaItem
+
+    item = MediaItem(
+        title="Once",
+        jellyfin_id="jf-once",
+        source="jellyfin",
+        backdrop_url="http://jf:8096/Items/jf-once/Images/Backdrop",
+    )
+    jpeg = _jpeg((30, 30, 30))
+    first = generate_one(item, "Netflix Hero", http_get=lambda _url: jpeg)
+    second = generate_one(item, "Netflix Hero", http_get=lambda _url: jpeg, replace=False)
+    assert first is not None and second is not None
+    from app.catalog import load_catalog
+
+    rows = [rec for rec in load_catalog() if rec.jellyfin_id == "jf-once"]
+    assert len(rows) == 1
 

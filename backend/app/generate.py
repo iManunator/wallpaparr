@@ -5,6 +5,7 @@ from __future__ import annotations
 import time
 import uuid
 from pathlib import Path
+from urllib.parse import urlparse
 
 from app import catalog as catalog_store
 from app.config import load_settings
@@ -142,12 +143,24 @@ def _artwork_urls(item: MediaItem) -> list[str]:
     return urls
 
 
+def _origin(url: str) -> str:
+    """scheme://host[:port] — used so API keys are not sent to lookalike hosts.
+
+    ``url.startswith(jellyfin_base)`` treated ``http://jf:8096.evil.example`` as
+    the Jellyfin server and attached the MediaBrowser token.
+    """
+    parsed = urlparse(str(url or "").strip())
+    if parsed.scheme.lower() not in ("http", "https") or not parsed.netloc:
+        return ""
+    return f"{parsed.scheme.lower()}://{parsed.netloc.lower()}"
+
+
 def _headers_for_url(url: str) -> dict[str, str] | None:
     settings = load_settings()
     jf = settings.jellyfin or {}
     base = (jf.get("url") or "").rstrip("/")
     key = jf.get("api_key") or ""
-    if base and key and url.startswith(base):
+    if base and key and _origin(url) == _origin(base):
         return JellyfinProvider(url=base, api_key=key, user_id=jf.get("user_id") or "").auth_headers()
     return None
 
@@ -330,10 +343,6 @@ def generate_one(
     previous = matching_records(catalog, item, layout_name)
     keep_pinned = any(rec.pinned for rec in previous)
     keep_hidden = any(rec.hidden for rec in previous)
-    if replace:
-        doomed = previous
-        if doomed:
-            catalog_store.remove_records({rec.id for rec in doomed})
     backdrop_bytes = _fetch_artwork(item, http_get=http_get)
     logo_bytes = _fetch_logo(item, http_get=http_get)
     settings = load_settings()
@@ -343,7 +352,19 @@ def generate_one(
     filename = _filename_for(item)
     dest: Path = catalog_store.layout_dir(layout_name) / filename
     save_jpeg(image, dest)
+    # Drop matching catalog rows only after the new JPEG is on disk. Deleting
+    # first meant a render/fetch failure wiped the previous still. ``replace``
+    # is kept as a caller flag; skip_existing=False used to duplicate rows for
+    # the same title, so we always replace the previous catalog entries.
+    if previous:
+        catalog_store.remove_records({rec.id for rec in previous}, keep_files={dest.name})
     want_motion = settings.motion_wallpapers if motion is None else motion
+    if not want_motion:
+        # Status serves a sibling MP4 when it exists, ignoring catalog.has_video.
+        # A still-only replace must not leave a stale baked loop on disk.
+        dest.with_suffix(".mp4").unlink(missing_ok=True)
+        dest.with_name(dest.stem + "_plate.jpg").unlink(missing_ok=True)
+        dest.with_name(dest.stem + "_chrome.png").unlink(missing_ok=True)
     video = False
     style = None
     if want_motion:

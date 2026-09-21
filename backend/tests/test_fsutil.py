@@ -70,6 +70,33 @@ def test_write_text_atomic_replaces_dest(tmp_path: Path):
     assert leftovers == []
 
 
+def test_write_text_atomic_unique_temps_under_concurrency(tmp_path: Path):
+    import json
+    import threading
+
+    dest = tmp_path / "catalog.json"
+    from app.fsutil import write_text_atomic
+
+    errors: list[Exception] = []
+
+    def worker(n: int) -> None:
+        try:
+            write_text_atomic(dest, json.dumps({"n": n}))
+        except Exception as exc:  # pragma: no cover - failure is the assertion
+            errors.append(exc)
+
+    threads = [threading.Thread(target=worker, args=(i,)) for i in range(8)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert errors == []
+    assert dest.is_file()
+    json.loads(dest.read_text(encoding="utf-8"))
+    leftovers = list(tmp_path.glob(".catalog.json*.tmp"))
+    assert leftovers == []
+
+
 def test_promote_temp_with_simulated_separate_roots(tmp_path: Path):
     """Two sibling trees (tmp vs data/gallery) — still moves when rename works."""
     tmp_root = tmp_path / "tmp"

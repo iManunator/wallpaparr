@@ -779,3 +779,40 @@ def test_wallpaper_status_taste_tonight_uses_custom_weights(client):
         params={"layout": "Netflix Hero", "profile": "cinephile"},
     ).json()
     assert named["title"] == "Harbor Season"
+
+
+def test_optional_auth_protects_mutating_routes(client, monkeypatch):
+    import base64
+
+    monkeypatch.setenv("WALLPAPARR_AUTH_USER", "admin")
+    monkeypatch.setenv("WALLPAPARR_AUTH_PASSWORD", "s3cret")
+    assert client.get("/api/health").status_code == 200
+    assert client.get("/api/wallpaper/status", params={"layout": "Netflix Hero"}).status_code == 200
+    assert client.get("/api/layouts/list").status_code == 200
+    assert client.get("/api/settings").status_code == 401
+    assert client.post("/api/generate", json={"layout": "Netflix Hero", "source": "demo", "limit": 1}).status_code == 401
+    token = base64.b64encode(b"admin:s3cret").decode()
+    headers = {"Authorization": f"Basic {token}"}
+    assert client.get("/api/settings", headers=headers).status_code == 200
+    wrong = base64.b64encode(b"admin:nope").decode()
+    assert client.get("/api/settings", headers={"Authorization": f"Basic {wrong}"}).status_code == 401
+
+
+def test_generate_rejects_huge_limit(client):
+    response = client.post(
+        "/api/generate",
+        json={"layout": "Netflix Hero", "source": "demo", "limit": 5000},
+    )
+    assert response.status_code == 422
+
+
+def test_media_preview_rejects_huge_limit(client):
+    response = client.get("/api/media", params={"source": "demo", "limit": 999})
+    assert response.status_code == 422
+
+
+def test_artwork_rejects_unsafe_item_id(client):
+    assert client.get("/api/media/artwork/..").status_code == 404
+    assert client.get("/api/media/artwork/%2e%2e%2fetc%2fpasswd").status_code == 404
+    assert client.get("/api/media/logo/foo/bar").status_code == 404
+    assert client.get("/api/media/artwork/demo-jf-1").status_code == 200

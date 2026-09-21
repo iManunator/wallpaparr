@@ -8,6 +8,9 @@
 # Copy `.env.example` → `.env` and set PUBLIC_BASE_URL to a LAN URL the TV can open.
 # Compose interpolates that value into the container; SUITE_* paths below are the
 # in-container defaults (bind-mount `./data:/data` to persist them).
+#
+# Optional non-root: set PUID/PGID in `.env` and chown ./data to that uid.
+# Default 0:0 is root — same as previous images, so existing bind-mounts keep working.
 services:
   wallpaparr:
     build:
@@ -16,6 +19,7 @@ services:
     image: ghcr.io/imanunator/wallpaparr:latest
     pull_policy: build
     container_name: wallpaparr
+    user: "${PUID:-0}:${PGID:-0}"
     ports:
       - "8787:8787"
     environment:
@@ -24,6 +28,8 @@ services:
       SUITE_LAYOUTS: /data/layouts
       SUITE_GALLERY: /data/gallery
       SUITE_CONFIG: /data/config.json
+      WALLPAPARR_AUTH_USER: ${WALLPAPARR_AUTH_USER:-}
+      WALLPAPARR_AUTH_PASSWORD: ${WALLPAPARR_AUTH_PASSWORD:-}
     volumes:
       - ./data:/data
     healthcheck:

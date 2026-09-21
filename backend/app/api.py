@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 from urllib.parse import quote
 
@@ -37,6 +38,16 @@ from app.queues import QUEUE_DEFS, TASTE_PRESETS, queue_ids_for, summarize_queue
 from app.selection import SelectionQuery, select_wallpaper, unique_values
 
 router = APIRouter()
+
+_MEDIA_ID = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
+
+
+def _safe_media_id(value: str | None) -> str | None:
+    """Reject path characters so artwork/logo proxy IDs cannot traverse Jellyfin URLs."""
+    text = str(value or "").strip()
+    if not text or _MEDIA_ID.fullmatch(text) is None:
+        return None
+    return text
 
 
 def _int_or_none(value: str | None) -> int | None:
@@ -617,7 +628,7 @@ def test_provider(provider: str, body: dict[str, Any] | None = Body(default=None
 
 
 @router.get("/api/media")
-def media_preview(source: str = "demo", limit: int = 12) -> list[dict[str, Any]]:
+def media_preview(source: str = "demo", limit: int = Query(12, ge=1, le=40)) -> list[dict[str, Any]]:
     return [item.model_dump() for item in collect_items(source, limit)]
 
 
@@ -641,6 +652,10 @@ def media_logo(item_id: str, tmdb_id: str | None = None, media_type: str = "movi
     """Clearlogo proxy: demo PNG, Jellyfin Logo, or TMDB logos. Rejects non-images."""
     from app.generate import resolve_logo_bytes
 
+    item_id = _safe_media_id(item_id)
+    tmdb_id = _safe_media_id(tmdb_id) if tmdb_id else None
+    if not item_id:
+        raise HTTPException(404, "No logo for this title")
     data = resolve_logo_bytes(item_id, tmdb_id=tmdb_id, media_type=media_type)
     if data and looks_like_image(data):
         return Response(
@@ -654,6 +669,9 @@ def media_logo(item_id: str, tmdb_id: str | None = None, media_type: str = "movi
 @router.get("/api/media/artwork/{item_id}")
 def media_artwork(item_id: str, kind: str = Query("backdrop")):
     """Same-origin artwork for the editor: demo stills, then Jellyfin Backdrop/Primary."""
+    item_id = _safe_media_id(item_id)
+    if not item_id:
+        raise HTTPException(404, "No image")
     bundled = demo_still_bytes(item_id)
     if bundled and looks_like_image(bundled):
         return Response(

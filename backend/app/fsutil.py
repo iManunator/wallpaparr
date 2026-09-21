@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import tempfile
 from pathlib import Path
 
 
@@ -31,9 +32,30 @@ def write_text_atomic(dest: Path | str, text: str, *, encoding: str = "utf-8") -
     full disk mid-write left a truncated file that then 500'd every API call.
     The tempfile lives next to ``dest`` so bind-mounted data volumes stay on
     the same device whenever possible.
+
+    The name includes a random mkstemp suffix so two threads in this process
+    cannot truncate each other's tempfile (pid-only names collided).
     """
     dest_path = Path(dest)
     dest_path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_path = dest_path.with_name(f".{dest_path.name}.{os.getpid()}.tmp")
-    tmp_path.write_text(text, encoding=encoding)
-    return promote_temp(tmp_path, dest_path)
+    fd, tmp_name = tempfile.mkstemp(
+        prefix=f".{dest_path.name}.",
+        suffix=".tmp",
+        dir=str(dest_path.parent),
+    )
+    tmp_path = Path(tmp_name)
+    try:
+        with os.fdopen(fd, "w", encoding=encoding) as handle:
+            fd = -1  # ownership transferred to the handle
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        return promote_temp(tmp_path, dest_path)
+    except Exception:
+        if fd >= 0:
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+        tmp_path.unlink(missing_ok=True)
+        raise
