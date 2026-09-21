@@ -9,13 +9,20 @@ from fastapi import APIRouter, Body, HTTPException, Query, Request
 from fastapi.responses import FileResponse, PlainTextResponse, Response
 
 from app import catalog as catalog_store
-from app.config import load_settings, public_base_url, save_settings
+from app.config import (
+    is_redacted_api_key,
+    load_settings,
+    merge_provider_secrets,
+    public_base_url,
+    redact_settings_dump,
+    save_settings,
+)
 from app.demo_art import public_catalog, still_bytes as demo_still_bytes
 from app.generate import bake_motion, collect_items, run_generate
 from app.images import image_media_type, looks_like_image
 from app.messages import enrich_provider_result
 from app.providers import HttpClient
-from app.jobs import reload_jobs, run_now
+from app.jobs import invalid_cron_jobs, reload_jobs, run_now
 from app.layouts import delete_layout, list_layouts, load_layout, reset_layout, save_layout, seed_presets
 from app import __version__
 from app.models import AppSettings, GenerateRequest, Layout, WallpaperStatus
@@ -242,15 +249,25 @@ def wallpaper_status(
     pool_arg = pool
     sort_arg = sort or "random"
     profile_arg = profile
+    taste_weights = None
     if queue:
         spec = QUEUE_DEFS.get(queue)
         if spec:
             pool_arg = spec.get("pool") or pool_arg
             if spec.get("sort") and sort_arg == "random":
                 sort_arg = str(spec["sort"])
+    active_profile = (settings.taste_profile or "tonight").strip().lower()
     if (pool_arg or "").startswith("taste:"):
-        profile_arg = profile_arg or pool_arg.split(":", 1)[1]
+        requested = pool_arg.split(":", 1)[1].strip().lower()
         pool_arg = None
+        # Plugin "Tonight's mix" sends pool=taste:tonight. Treat that as the
+        # configured mix so the TV matches the web Tonight page + sliders.
+        if not profile_arg:
+            profile_arg = active_profile if requested in ("tonight", active_profile) else requested
+    if profile_arg:
+        name = str(profile_arg).strip().lower()
+        if name == active_profile:
+            taste_weights = settings.taste_weights
     query = SelectionQuery(
         layout=layout,
         genre=genre,
@@ -263,6 +280,7 @@ def wallpaper_status(
         pool=pool_arg,
         exclude=exclude or exclude_path,
         profile=profile_arg,
+        taste_weights=taste_weights,
     )
     selected = select_wallpaper(catalog, query)
     status = WallpaperStatus(sort=query.sort, pool=query.pool or queue or None, layout=layout)
@@ -484,6 +502,7 @@ def tonight(
             "style": settings.motion_style,
             "preset": settings.motion_preset,
             "intensity": intensity_from_preset(settings.motion_preset),
+            "duration": settings.motion_duration,
             "light_leak": settings.light_leak,
             "vary": bool(settings.motion_vary),
             "seed": motion_seed,
@@ -519,6 +538,7 @@ def dashboard() -> dict[str, Any]:
             "jobs": len(settings.cron_jobs or []),
             "last": ops.get("cron"),
             "last_generate": ops.get("generate"),
+            "errors": invalid_cron_jobs(settings.cron_jobs, enabled_only=True),
         },
         "providers": {
             "jellyfin": {
@@ -545,14 +565,23 @@ def dashboard() -> dict[str, Any]:
 
 @router.get("/api/settings")
 def get_settings() -> dict[str, Any]:
-    return load_settings().model_dump()
+    return redact_settings_dump(load_settings().model_dump())
 
 
 @router.post("/api/settings")
 def post_settings(settings: AppSettings) -> dict[str, Any]:
-    save_settings(settings)
+    stored = load_settings()
+    merged = merge_provider_secrets(settings, stored)
+    cron_errors = invalid_cron_jobs(merged.cron_jobs, enabled_only=True)
+    if cron_errors:
+        names = ", ".join(f"{row['name']} ({row['cron']})" for row in cron_errors)
+        raise HTTPException(
+            400,
+            f"Invalid cron expression on enabled job(s): {names}",
+        )
+    save_settings(merged)
     reload_jobs()
-    return {"status": "ok", "settings": settings.model_dump()}
+    return {"status": "ok", "settings": redact_settings_dump(merged.model_dump())}
 
 
 @router.post("/api/settings/test/{provider}")
@@ -563,7 +592,11 @@ def test_provider(provider: str, body: dict[str, Any] | None = Body(default=None
     from app.ops import record_event
 
     draft = body if isinstance(body, dict) else {}
-    overrides = {k: v for k, v in draft.items() if v is not None and str(v).strip() != ""}
+    overrides = {
+        k: v
+        for k, v in draft.items()
+        if v is not None and str(v).strip() != "" and not (k == "api_key" and is_redacted_api_key(v))
+    }
 
     result: dict[str, Any]
     if key == "jellyfin":

@@ -201,6 +201,20 @@ def test_profile_from_settings_defaults():
     assert profile.quality == "cinematic"
 
 
+def test_profile_from_settings_missing_fields_match_app_settings():
+    class Bare:
+        pass
+
+    profile = profile_from_settings(Bare())
+    defaults = profile_from_settings(AppSettings())
+    assert profile.fps == defaults.fps == 24
+    assert profile.duration == defaults.duration == 15.0
+    assert profile.intensity == defaults.intensity
+    assert profile.fly_in is True
+    assert profile.edge_fade_seconds == 1.0
+    assert intensity_from_preset(None) == intensity_from_preset("balanced")
+
+
 def test_encoder_is_projectivy_cfr_without_bframes():
     profile = MotionProfile(style="parallax", quality="cinematic", duration=12, fps=30)
     args = encoder_args(profile)

@@ -14,6 +14,8 @@ data class ResolvedQuery(
     val pool: String? = null,
     val minYear: String? = null,
     val minRating: Float? = null,
+    val profile: String? = null,
+    val queue: String? = null,
 )
 
 object WallpaperPickModes {
@@ -175,22 +177,22 @@ object WallpaperPickModes {
         val odd = counter % 2 == 0
         return when (modeId) {
             "tonight" -> ResolvedQuery(primary, "random", pool = "taste:tonight")
-            "continue_watching" -> ResolvedQuery(primary, "random", pool = "continue_watching")
-            "newly_added" -> ResolvedQuery(primary, "latest", pool = "newly_added")
-            "seerr_trending" -> ResolvedQuery(primary, "rating", pool = "source:jellyseerr")
-            "pinned" -> ResolvedQuery(primary, "random", pool = "pinned")
+            "continue_watching" -> ResolvedQuery(primary, "random", pool = "continue_watching", queue = "continue_watching")
+            "newly_added" -> ResolvedQuery(primary, "latest", pool = "newly_added", queue = "newly_added")
+            "seerr_trending" -> ResolvedQuery(primary, "rating", pool = "source:jellyseerr", queue = "seerr_trending")
+            "pinned" -> ResolvedQuery(primary, "random", pool = "pinned", queue = "pinned")
             "latest" -> ResolvedQuery(primary, "latest")
             "oldest" -> ResolvedQuery(primary, "oldest")
             "rating_high" -> ResolvedQuery(primary, "rating")
             "rating_low" -> ResolvedQuery(primary, "rating_asc")
             "year_new" -> ResolvedQuery(primary, "year")
             "year_old" -> ResolvedQuery(primary, "year_asc")
-            "unwatched" -> ResolvedQuery(primary, "random", pool = "unwatched")
+            "unwatched" -> ResolvedQuery(primary, "random", pool = "unwatched", queue = "unwatched")
             "partial" -> ResolvedQuery(primary, "random", pool = "partial")
             "watched" -> ResolvedQuery(primary, "random", pool = "watched")
             "in_library" -> ResolvedQuery(primary, "random", pool = "in_library")
             "seerr_only" -> ResolvedQuery(primary, "random", pool = "seerr_only")
-            "requestable" -> ResolvedQuery(primary, "random", pool = "requestable")
+            "requestable" -> ResolvedQuery(primary, "random", pool = "requestable", queue = "requestable")
             "available_seerr" -> ResolvedQuery(primary, "random", pool = "available")
             "source_jellyfin" -> ResolvedQuery(primary, "random", pool = "source:jellyfin")
             "source_seerr" -> ResolvedQuery(primary, "random", pool = "source:jellyseerr")

@@ -12,6 +12,41 @@ from app.models import GenerateRequest
 _scheduler: BackgroundScheduler | None = None
 
 
+def cron_expr(job: dict | None) -> str:
+    spec = job or {}
+    return str(spec.get("cron") or spec.get("schedule") or "0 4 * * *")
+
+
+def cron_parse_error(expr: str) -> str | None:
+    """Return a short reason if ``expr`` is not a 5-field crontab, else None."""
+    try:
+        CronTrigger.from_crontab(expr)
+    except Exception as exc:
+        return str(exc) or "invalid cron expression"
+    return None
+
+
+def invalid_cron_jobs(jobs: list | None, *, enabled_only: bool = True) -> list[dict]:
+    """Jobs whose crontab would be skipped by :func:`reload_jobs`."""
+    errors: list[dict] = []
+    for index, job in enumerate(jobs or []):
+        spec = job or {}
+        if enabled_only and not spec.get("enabled", True):
+            continue
+        expr = cron_expr(spec)
+        reason = cron_parse_error(expr)
+        if reason:
+            errors.append(
+                {
+                    "index": index,
+                    "name": spec.get("name") or f"Schedule {index + 1}",
+                    "cron": expr,
+                    "error": reason,
+                }
+            )
+    return errors
+
+
 def start_scheduler() -> BackgroundScheduler:
     global _scheduler
     if _scheduler and _scheduler.running:
@@ -35,10 +70,20 @@ def reload_jobs() -> None:
         return
     _scheduler.remove_all_jobs()
     settings = load_settings()
+    skipped = invalid_cron_jobs(settings.cron_jobs, enabled_only=True)
+    if skipped:
+        from app.ops import record_event
+
+        record_event("cron_errors", {"jobs": skipped, "count": len(skipped)})
+    else:
+        from app.ops import load_ops, record_event
+
+        if load_ops().get("cron_errors"):
+            record_event("cron_errors", {"jobs": [], "count": 0})
     for index, job in enumerate(settings.cron_jobs or []):
         if not job.get("enabled", True):
             continue
-        expr = job.get("cron") or job.get("schedule") or "0 4 * * *"
+        expr = cron_expr(job)
         try:
             trigger = CronTrigger.from_crontab(expr)
         except Exception:

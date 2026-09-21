@@ -7,7 +7,7 @@ SeerChannel (Preview Channel rows) is **not** part of this suite. Wallpaparr shi
 | Artifact | Where |
 | --- | --- |
 | **Plugin APK** | [`wallpaparr-plugin-release.apk`](https://github.com/iManunator/wallpaparr/releases/latest/download/wallpaparr-plugin-release.apk) on the [GitHub Release](https://github.com/iManunator/wallpaparr/releases/latest) |
-| **Container** | [`ghcr.io/imanunator/wallpaparr`](https://github.com/iManunator/wallpaparr/pkgs/container/wallpaparr) (`:latest` from `main`, `:1.0.0` from tag `v1.0.0`) |
+| **Container** | [`ghcr.io/imanunator/wallpaparr`](https://github.com/iManunator/wallpaparr/pkgs/container/wallpaparr) (`:latest` from `main`, `:1.0.1` from tag `v1.0.1`) |
 
 Packaging, `packages: write`, and the exact tag command: **[RELEASE.md](RELEASE.md)**.
 
@@ -81,15 +81,15 @@ Or in `docker-compose.yml`, add a second volume line under the existing one:
 
 ### Tag a GitHub Release (GHCR + APKs)
 
-**Do not retag earlier versions.** After 1.0.0 is on `main`, tag `v1.0.0` so Release + GHCR publish `wallpaparr-plugin-release.apk` and `:v1.0.0` / `:1.0.0` / `:latest`.
+**Do not retag earlier versions.** After 1.0.1 is on `main`, tag `v1.0.1` so Release + GHCR publish `wallpaparr-plugin-release.apk` and `:v1.0.1` / `:1.0.1` / `:latest`.
 
-`.github/workflows/release.yml` runs on `v*` tags: pushes `ghcr.io/imanunator/wallpaparr:<tag>` and `:latest` (`packages: write`), then attaches **`wallpaparr-plugin-release.apk`** (and debug) to a GitHub Release (`contents: write`). Details: [RELEASE.md](RELEASE.md).
+`.github/workflows/release.yml` runs on `v*` tags: pushes `ghcr.io/imanunator/wallpaparr:<tag>` and `:latest` (`packages: write` on the release job), then attaches **`wallpaparr-plugin-release.apk`** (and debug) to a GitHub Release (`contents: write`). Details: [RELEASE.md](RELEASE.md).
 
 ```bash
 git checkout main
 git pull origin main
-git tag -a v1.0.0 -m "Wallpaparr 1.0.0"
-git push origin v1.0.0
+git tag -a v1.0.1 -m "Wallpaparr 1.0.1"
+git push origin v1.0.1
 ```
 
 Merges to **main** also run CI, which pushes GHCR `:latest` when the event is not a pull request.
@@ -98,7 +98,7 @@ Merges to **main** also run CI, which pushes GHCR `:latest` when the event is no
 
 ```bash
 docker pull ghcr.io/imanunator/wallpaparr:latest
-# or ghcr.io/imanunator/wallpaparr:1.0.0
+# or ghcr.io/imanunator/wallpaparr:1.0.1
 
 export PUBLIC_BASE_URL=http://YOUR_LAN_IP:8787
 docker compose pull

@@ -52,3 +52,18 @@ def test_run_now_uses_demo_defaults(suite_dirs):
     assert result["count"] == 1
     assert "Harbor Season" in result["created"]
     assert result["message"]
+
+
+def test_cron_parse_error_detects_garbage():
+    from app.jobs import cron_parse_error, invalid_cron_jobs
+
+    assert cron_parse_error("0 4 * * *") is None
+    assert cron_parse_error("not-a-schedule") is not None
+    errors = invalid_cron_jobs(
+        [
+            {"enabled": True, "name": "Ok", "cron": "0 4 * * *"},
+            {"enabled": True, "name": "Bad", "cron": "hourly"},
+            {"enabled": False, "name": "Draft", "cron": "nope"},
+        ]
+    )
+    assert [row["name"] for row in errors] == ["Bad"]

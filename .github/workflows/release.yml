@@ -23,7 +23,6 @@ on:
 
 permissions:
   contents: write
-  packages: write
 
 env:
   IMAGE: ghcr.io/imanunator/wallpaparr

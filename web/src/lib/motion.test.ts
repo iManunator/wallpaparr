@@ -21,7 +21,7 @@ describe("motion options", () => {
   it("describes parallax loops", () => {
     expect(describeMotion("parallax", 0.55, 6)).toMatch(/chrome stays locked/);
     expect(describeMotion("kenburns", 0.55, 6)).toMatch(/chrome locked/);
-    expect(defaultDuration("cinematic")).toBe(16);
+    expect(defaultDuration("cinematic")).toBe(15);
   });
 
   it("selects VIDEO vs IMAGE like the plugin", () => {
@@ -32,9 +32,10 @@ describe("motion options", () => {
     expect(shouldPreferVideo({ preferMotion: false, hasVideo: true, fallbackStill: false })).toBe("video");
   });
 
-  it("defaults duration from quality", () => {
-    expect(defaultDuration("light")).toBe(8);
-    expect(defaultDuration("standard")).toBe(12);
+  it("defaults duration from AppSettings, not quality tier", () => {
+    expect(defaultDuration("light")).toBe(15);
+    expect(defaultDuration("standard")).toBe(15);
+    expect(defaultDuration("cinematic")).toBe(15);
   });
 
   it("maps intensity presets", () => {

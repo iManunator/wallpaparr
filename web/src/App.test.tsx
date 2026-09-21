@@ -390,7 +390,7 @@ vi.stubGlobal(
       body = {
         ok: true,
         gallery: { count: 6, videos: 1, pinned: 0, hidden: 0 },
-        cron: { jobs: 0, last: null, last_generate: null },
+        cron: { jobs: 0, last: null, last_generate: null, errors: [] },
         providers: { demo: { configured: true } },
         motion: { preset: "cinematic", style: "parallax" },
         taste: { profile: "tonight" },

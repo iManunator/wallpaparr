@@ -333,6 +333,13 @@ function DashboardPage() {
           <h3>Cron</h3>
           <p className="dash-stat">{formatOpsTime(cron.last?.at)}</p>
           <p className="muted">{cron.jobs ?? 0} jobs · last generate {formatOpsTime(cron.last_generate?.at)}</p>
+          {Array.isArray(cron.errors) && cron.errors.length > 0 && (
+            <p className="error" style={{ marginTop: 8 }}>
+              {cron.errors.length === 1
+                ? `“${cron.errors[0].name}” has a bad cron expression (${cron.errors[0].cron}) — it is not scheduled.`
+                : `${cron.errors.length} enabled jobs have invalid cron expressions and are not scheduled.`}
+            </p>
+          )}
         </article>
         <article className="card">
           <h3>Motion</h3>
@@ -459,7 +466,13 @@ function SettingsPage({ onTheme }: { onTheme: (theme: string) => void }) {
           <label>URL</label>
           <input value={settings.jellyfin.url || ""} onChange={(e) => patch("jellyfin", "url", e.target.value)} placeholder="http://192.168.1.10:8096" />
           <label>API key</label>
-          <input value={settings.jellyfin.api_key || ""} onChange={(e) => patch("jellyfin", "api_key", e.target.value)} />
+          <input
+            type="password"
+            autoComplete="off"
+            value={settings.jellyfin.api_key || ""}
+            onChange={(e) => patch("jellyfin", "api_key", e.target.value)}
+            placeholder="saved on the server"
+          />
           <label>User id (optional)</label>
           <input value={settings.jellyfin.user_id || ""} onChange={(e) => patch("jellyfin", "user_id", e.target.value)} />
           <button className="btn ghost tiny" style={{ marginTop: 10 }} onClick={() => testConnection("jellyfin")}>Test Jellyfin</button>
@@ -469,7 +482,13 @@ function SettingsPage({ onTheme }: { onTheme: (theme: string) => void }) {
           <label>URL</label>
           <input value={settings.jellyseerr.url || ""} onChange={(e) => patch("jellyseerr", "url", e.target.value)} placeholder="http://192.168.1.10:5055" />
           <label>API key</label>
-          <input value={settings.jellyseerr.api_key || ""} onChange={(e) => patch("jellyseerr", "api_key", e.target.value)} />
+          <input
+            type="password"
+            autoComplete="off"
+            value={settings.jellyseerr.api_key || ""}
+            onChange={(e) => patch("jellyseerr", "api_key", e.target.value)}
+            placeholder="saved on the server"
+          />
           <button className="btn ghost tiny" style={{ marginTop: 10 }} onClick={() => testConnection("jellyseerr")}>Test Seerr</button>
         </div>
         <div className="card">
@@ -622,7 +641,7 @@ function SettingsPage({ onTheme }: { onTheme: (theme: string) => void }) {
             max={2.5}
             step={0.05}
             disabled={settings.motion_edge_fade === false}
-            value={settings.motion_edge_fade_seconds ?? 0.35}
+            value={settings.motion_edge_fade_seconds ?? 1.0}
             onChange={(e) => setSettings({ ...settings, motion_edge_fade_seconds: Number(e.target.value) })}
           />
           <label>
@@ -633,7 +652,7 @@ function SettingsPage({ onTheme }: { onTheme: (theme: string) => void }) {
             />{" "}
             Fly-in intro (experimental)
           </label>
-          <p className="muted">Off by default. Adds a fast zoom-in swoop at the very start of the clip that eases out smoothly into the normal parallax drift — no visible cut between the two motions.</p>
+          <p className="muted">On by default. Adds a fast zoom-in swoop at the very start of the clip that eases out smoothly into the normal parallax drift — no visible cut between the two motions.</p>
           <label>Fly-in duration seconds (0.2–4)</label>
           <input
             type="number"
@@ -662,10 +681,10 @@ function SettingsPage({ onTheme }: { onTheme: (theme: string) => void }) {
             type="number"
             min={12}
             max={30}
-            value={settings.motion_fps || 30}
+            value={settings.motion_fps || 24}
             onChange={(e) => setSettings({ ...settings, motion_fps: Number(e.target.value) })}
           />
-          <p className="muted">30 fps is closest to the editor CSS preview; 24 is a lighter encode. Android TV stays at H.264 1080p yuv420p.</p>
+          <p className="muted">24 fps is the first-run default (lighter encode). 30 fps is closer to the editor CSS preview. Android TV stays at H.264 1080p yuv420p.</p>
           <p className="muted">{describeMotion(style, intensity, duration)}. Intensity changes background amplitude only.</p>
           <div style={{ marginTop: 12 }}>
             <WallpaperStage
@@ -735,7 +754,13 @@ function SettingsPage({ onTheme }: { onTheme: (theme: string) => void }) {
           <h3>TMDB (optional enrichment)</h3>
           <p className="muted">Fills missing year / genres / runtime and clearlogos for Seerr titles (discover has no logos). Free key at themoviedb.org.</p>
           <label>API key</label>
-          <input value={settings.tmdb.api_key || ""} onChange={(e) => patch("tmdb", "api_key", e.target.value)} />
+          <input
+            type="password"
+            autoComplete="off"
+            value={settings.tmdb.api_key || ""}
+            onChange={(e) => patch("tmdb", "api_key", e.target.value)}
+            placeholder="saved on the server"
+          />
           <label>Language</label>
           <input value={settings.tmdb.language || "en-US"} onChange={(e) => patch("tmdb", "language", e.target.value)} />
           <button className="btn ghost tiny" style={{ marginTop: 10 }} onClick={() => testConnection("tmdb")}>Test TMDB</button>
@@ -744,11 +769,17 @@ function SettingsPage({ onTheme }: { onTheme: (theme: string) => void }) {
           <h3>OMDb (optional ratings)</h3>
           <p className="muted">Adds IMDb rating, Rotten Tomatoes, Metacritic, and awards to titles with a resolvable IMDb id (Jellyseerr's own detail lookup, no TMDB key needed). Free key at omdbapi.com. Add layers with these slots in the editor to show them.</p>
           <label>API key</label>
-          <input value={settings.omdb.api_key || ""} onChange={(e) => patch("omdb", "api_key", e.target.value)} />
+          <input
+            type="password"
+            autoComplete="off"
+            value={settings.omdb.api_key || ""}
+            onChange={(e) => patch("omdb", "api_key", e.target.value)}
+            placeholder="saved on the server"
+          />
         </div>
         <div className="card">
           <h3>Cron / batch</h3>
-          <p className="muted">Each schedule runs independently on its own cron expression. Scheduled generate uses the same skip / replace / refresh-status / cleanup / id rules as the Generate page. Save settings to persist the schedules, or run one now for a toast with created / skipped / cleaned counts.</p>
+          <p className="muted">Each schedule runs independently on its own cron expression. A bad expression is rejected on Save (and skipped at boot) so a typo does not silently never run. Scheduled generate uses the same skip / replace / refresh-status / cleanup / id rules as the Generate page. Save settings to persist the schedules, or run one now for a toast with created / skipped / cleaned counts.</p>
           {(cronJobs.length ? cronJobs : [defaultCronJob("Schedule 1")]).map((cron, index) => (
             <div className="cron-job" key={index} style={{ borderTop: index > 0 ? "1px solid var(--line)" : undefined, marginTop: index > 0 ? 16 : 0, paddingTop: index > 0 ? 16 : 0 }}>
               <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>

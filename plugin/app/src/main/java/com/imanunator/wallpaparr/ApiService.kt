@@ -31,6 +31,8 @@ interface ApiService {
         @Query("sort") sort: String? = null,
         @Query("pool") pool: String? = null,
         @Query("exclude") exclude: String? = null,
+        @Query("profile") profile: String? = null,
+        @Query("queue") queue: String? = null,
     ): Call<WallpaperStatus>
 
     @GET("/api/layouts/list")

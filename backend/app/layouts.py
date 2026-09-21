@@ -7,6 +7,7 @@ from pathlib import Path
 
 from app.catalog import safe_name
 from app.config import LAYOUTS_DIR, ensure_dirs
+from app.fsutil import write_text_atomic
 from app.models import Layout, LayoutBackground, Layer
 
 # Keys users can change on a bundled preset without losing them on a DNA refresh.
@@ -179,7 +180,7 @@ def seed_presets(force: bool = False) -> None:
                 to_write = Layout.model_validate(payload)
             except Exception:
                 to_write = layout
-        path.write_text(to_write.model_dump_json(indent=2), encoding="utf-8")
+        write_text_atomic(path, to_write.model_dump_json(indent=2))
 
 
 def list_layouts() -> list[str]:
@@ -196,14 +197,17 @@ def load_layout(name: str) -> Layout | None:
     except ValueError:
         return PRESETS.get(name)
     if path.is_file():
-        return Layout.model_validate(json.loads(path.read_text(encoding="utf-8")))
+        try:
+            return Layout.model_validate(json.loads(path.read_text(encoding="utf-8")))
+        except (OSError, json.JSONDecodeError, ValueError):
+            return PRESETS.get(name)
     return PRESETS.get(name)
 
 
 def save_layout(layout: Layout) -> Layout:
     ensure_dirs()
     path = _layout_path(layout.name)
-    path.write_text(layout.model_dump_json(indent=2), encoding="utf-8")
+    write_text_atomic(path, layout.model_dump_json(indent=2))
     return layout
 
 

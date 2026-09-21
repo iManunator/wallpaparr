@@ -1,14 +1,17 @@
 export type MotionStyle = "parallax" | "kenburns" | "drift";
 
+/** Match backend AppSettings / profile_from_settings first-run defaults. */
+export const DEFAULT_MOTION_DURATION = 15;
+export const DEFAULT_MOTION_FPS = 24;
+export const DEFAULT_MOTION_PRESET = "balanced";
+
 export function clampIntensity(value: number): number {
   if (Number.isNaN(value)) return 0.55;
   return Math.min(1, Math.max(0, value));
 }
 
-export function defaultDuration(quality: string): number {
-  if (quality === "cinematic") return 16;
-  if (quality === "standard") return 12;
-  return 8;
+export function defaultDuration(_quality?: string): number {
+  return DEFAULT_MOTION_DURATION;
 }
 
 export function describeMotion(style: MotionStyle, intensity: number, duration: number): string {
@@ -55,14 +58,14 @@ const PAN_Y_RATIO_MAX = 0.18;
 const DEFAULT_PAN_Y_RATIO = 0.14;
 
 export function intensityFromPreset(name: string | null | undefined): number {
-  return INTENSITY_PRESETS[(name || "cinematic").toLowerCase()] ?? 0.55;
+  return INTENSITY_PRESETS[(name || DEFAULT_MOTION_PRESET).toLowerCase()] ?? INTENSITY_PRESETS[DEFAULT_MOTION_PRESET];
 }
 
 export function nearestMotionPreset(value: number): string {
   const intensity = clampIntensity(value);
   return Object.entries(INTENSITY_PRESETS).reduce((best, [name, amount]) =>
     Math.abs(amount - intensity) < Math.abs(INTENSITY_PRESETS[best] - intensity) ? name : best,
-  "cinematic");
+  DEFAULT_MOTION_PRESET);
 }
 
 export type VariedMotion = {

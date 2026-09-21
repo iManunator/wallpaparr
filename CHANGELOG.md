@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Motion bake fallbacks now match `AppSettings` (24 fps, balanced, 15s loop, fly-in on) instead of the old 30 fps / cinematic / quality-duration tables when a field is missing.
+- Invalid cron expressions are rejected on save and listed on the dashboard instead of being skipped with no warning.
+- `GET /api/settings` redacts provider API keys; a round-trip save keeps the stored secret unless you type a new one (or clear the field).
+- Layout JSON writes use the same atomic tempfile+rename path as catalog/settings; a truncated layout file no longer 500s the API.
+- Plugin status requests can send `profile` / `queue`; Tonight's mix follows the configured taste profile and slider weights.
+- CI image publish waits on Android tests; Release workflow `packages: write` is job-scoped.
+- README rewritten in a less brochure-y voice. Docs version examples catch up to 1.0.1.
+
 ## 1.0.1 - 2026-09-21
 
 - **Generate jobs no longer drop the Jellyseerr category.** Async batches now keep `seerr_category` (e.g. "Upcoming movies") instead of always falling back to trending; cron jobs already forwarded it correctly.

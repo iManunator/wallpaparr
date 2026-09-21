@@ -186,3 +186,29 @@ def test_seed_presets_skips_current_revision(suite_dirs):
     layouts_mod.seed_presets()
     kept = json.loads(path.read_text(encoding="utf-8"))
     assert kept["description"] == "user tweak at current revision"
+
+
+def test_save_layout_is_atomic_and_load_survives_corrupt_json(suite_dirs):
+    layouts_mod = suite_dirs["layouts_mod"]
+    layouts_dir = suite_dirs["layouts"]
+    custom = layouts_mod.Layout.model_validate(
+        {
+            "name": "Atomic Copy",
+            "preset": False,
+            "layers": [{"id": "title", "slot": "title", "x": 80, "y": 80}],
+        }
+    )
+    layouts_mod.save_layout(custom)
+    path = layouts_dir / "Atomic Copy.json"
+    assert path.is_file()
+    leftovers = list(layouts_dir.glob(".Atomic Copy.json.*.tmp"))
+    assert leftovers == []
+    path.write_text("{truncated", encoding="utf-8")
+    assert layouts_mod.load_layout("Atomic Copy") is None
+    gold = layouts_mod.load_layout("Netflix Hero")
+    assert gold is not None
+    corrupt_preset = layouts_dir / "Netflix Hero.json"
+    corrupt_preset.write_text("{truncated", encoding="utf-8")
+    fallback = layouts_mod.load_layout("Netflix Hero")
+    assert fallback is not None
+    assert fallback.name == "Netflix Hero"
