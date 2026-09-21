@@ -1,0 +1,149 @@
+# Wallpaparr Release
+#
+# Trigger: git tag matching v* (preferred: v1.0.0) or workflow_dispatch.
+#
+# A v* tag push:
+#   1. Builds and pushes ghcr.io/imanunator/wallpaparr
+#        :latest, :vX.Y.Z, :X.Y.Z, :sha-<git>
+#      GITHUB_TOKEN needs packages: write (set below). OCI source labels
+#      attach the package to this GitHub repository.
+#   2. Builds sideload APKs and attaches them to a GitHub Release:
+#        wallpaparr-plugin-release.apk  ← primary TV install
+#        wallpaparr-plugin-debug.apk
+#      GITHUB_TOKEN needs contents: write for the Release.
+#
+# Exact ship command (from main, after this workflow is on the default branch):
+#   git tag v1.0.0 && git push origin v1.0.0
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  IMAGE: ghcr.io/imanunator/wallpaparr
+
+jobs:
+  release:
+    permissions:
+      contents: write
+      packages: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ env.IMAGE }}
+          labels: |
+            org.opencontainers.image.title=Wallpaparr
+            org.opencontainers.image.description=Cinematic Projectivy live/parallax wallpapers from Jellyfin and Seerr
+            org.opencontainers.image.source=https://github.com/iManunator/wallpaparr
+            org.opencontainers.image.url=https://github.com/iManunator/wallpaparr
+            org.opencontainers.image.documentation=https://github.com/iManunator/wallpaparr#readme
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.vendor=iManunator
+          tags: |
+            type=raw,value=latest,enable=true
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install Android SDK platforms
+        run: |
+          export ANDROID_HOME="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+          SDKMANAGER="$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | tail -n 1)"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+      - name: Build sideload APKs
+        working-directory: plugin
+        run: ./gradlew :app:assembleDebug :app:assembleRelease --no-daemon
+
+      - name: Stage artifacts
+        run: |
+          mkdir -p dist
+          cp plugin/app/build/outputs/apk/debug/app-debug.apk dist/wallpaparr-plugin-debug.apk
+          cp plugin/app/build/outputs/apk/release/app-release.apk dist/wallpaparr-plugin-release.apk
+          cp docker-compose.yml dist/
+          cp config.example.json dist/
+          cp CHANGELOG.md dist/
+          echo "${IMAGE}:latest" > dist/IMAGE.txt
+          echo "${{ github.ref_name }}" > dist/VERSION.txt
+          ls -lh dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wallpaparr-release-pack
+          path: dist/
+
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          name: Wallpaparr ${{ github.ref_name }}
+          draft: false
+          make_latest: true
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+          body: |
+            ## Wallpaparr ${{ github.ref_name }}
+
+            Cinematic **Projectivy** wallpapers — stills plus optional **parallax VIDEO** loops — from Jellyfin and Jellyseerr/Seerr.
+
+            ### Downloads
+
+            | Artifact | What it is |
+            | --- | --- |
+            | **`wallpaparr-plugin-release.apk`** | Sideload this on Android TV / Google TV. Primary plugin install. |
+            | `wallpaparr-plugin-debug.apk` | Debug build of the same plugin |
+            | Container | `ghcr.io/imanunator/wallpaparr:${{ github.ref_name }}` (also `:latest`) |
+
+            Plugin (after install): Projectivy → Appearance → Wallpaper → **Wallpaparr**.
+            Server URL: `http://YOUR_LAN_IP:8787`. Package `com.imanunator.wallpaparr`.
+
+            ```bash
+            docker pull ghcr.io/imanunator/wallpaparr:latest
+            adb install -r wallpaparr-plugin-release.apk
+            ```
+
+            Local verify (builds Dockerfile, demo catalog, no Jellyfin): `./scripts/verify.sh`
+
+            - Install: [docs/INSTALL.md](https://github.com/iManunator/wallpaparr/blob/main/docs/INSTALL.md)
+            - Packaging / GHCR: [docs/RELEASE.md](https://github.com/iManunator/wallpaparr/blob/main/docs/RELEASE.md)
+            - Parallax: [docs/MOTION.md](https://github.com/iManunator/wallpaparr/blob/main/docs/MOTION.md)
+
+            **SeerChannel** (Preview Channel rows) is not included — install [SeerChannel](https://github.com/iManunator/SeerChannel) separately if you want home-screen rows.
+          files: |
+            dist/wallpaparr-plugin-debug.apk
+            dist/wallpaparr-plugin-release.apk
+            dist/docker-compose.yml
+            dist/config.example.json
+            dist/CHANGELOG.md

@@ -1,0 +1,54 @@
+{
+  "public_base_url": "http://192.168.1.10:8787",
+  "timezone": "UTC",
+  "motion_wallpapers": false,
+  "motion_quality": "light",
+  "motion_style": "parallax",
+  "motion_intensity": 0.55,
+  "motion_duration": null,
+  "motion_fps": 30,
+  "overwrite_existing": false,
+  "editor_theme": "cinema",
+  "motion_preset": "cinematic",
+  "light_leak": true,
+  "motion_vary": true,
+  "taste_profile": "tonight",
+  "taste_weights": {
+    "unwatched": 50,
+    "newly_added": 30,
+    "requestable": 20
+  },
+  "overlays_enabled": false,
+  "overlay_clock": true,
+  "overlays": [],
+  "title_display": "auto",
+  "jellyfin": {
+    "url": "http://192.168.1.10:8096",
+    "api_key": "YOUR_JELLYFIN_API_KEY",
+    "user_id": ""
+  },
+  "jellyseerr": {
+    "url": "http://192.168.1.10:5055",
+    "api_key": "YOUR_SEERR_API_KEY",
+    "trending_window": "week"
+  },
+  "tmdb": {
+    "api_key": "",
+    "language": "en-US"
+  },
+  "cron_jobs": [
+    {
+      "enabled": false,
+      "cron": "0 4 * * *",
+      "layout": "Netflix Hero",
+      "source": "jellyfin",
+      "skip_existing": true,
+      "replace_existing": false,
+      "cleanup": true,
+      "motion": false,
+      "limit": 20,
+      "ids": [],
+      "skip_ids": []
+    }
+  ]
+}

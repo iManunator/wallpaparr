@@ -1,0 +1,10 @@
+.git
+data
+**/__pycache__
+**/.venv
+web/node_modules
+web/dist
+plugin/.gradle
+plugin/**/build
+**/.pytest_cache
+**/.coverage
