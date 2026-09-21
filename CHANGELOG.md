@@ -2,13 +2,17 @@
 
 ## Unreleased
 
-- Generate jobs now keep the selected Jellyseerr category (`seerr_category`) instead of always falling back to trending.
-- `/api/health` version is read from the repo `VERSION` file (was a stale `1.2.7`).
-- Wallpaper image paths reject directory traversal; missing layouts no longer create empty gallery folders.
-- Corrupt `config.json` / `catalog.json` no longer 500 the whole API; JSON writes are atomic.
-- `config.example.json` and `.env.example` match runtime settings defaults and documented `SUITE_*` paths.
-- CI: `npm ci`, frontend cache, image publish waits for backend/frontend tests, tighter `packages: write` scope.
-- README: first-run prerequisites, one LAN URL warning, and a home-LAN note that mutating APIs are unauthenticated.
+## 1.0.1 - 2026-09-21
+
+- **Generate jobs no longer drop the Jellyseerr category.** Async batches now keep `seerr_category` (e.g. "Upcoming movies") instead of always falling back to trending; cron jobs already forwarded it correctly.
+- **`/api/health` version fixed.** It was reading a stale hardcoded `1.2.7`; now reads the repo `VERSION` file, so it correctly reports `1.0.1`.
+- **Wallpaper path resolution hardened.** A sibling folder like `Netflix Hero-extra/` could be read as if it were inside `Netflix Hero/`; fixed with proper path containment instead of a string-prefix check.
+- **Corrupt `config.json` / `catalog.json` no longer 500 the whole API.** JSON writes are now atomic (sibling tempfile + rename), and a broken file is left on disk instead of being silently overwritten.
+- `config.example.json` and `.env.example` now match the app's actual runtime defaults, and document the `SUITE_*` container paths.
+- CI: `packages: write` scoped to just the image-publish job (was workflow-wide), image publish now waits on backend + frontend tests, `npm ci` everywhere for reproducible installs.
+- Frontend error toasts now parse FastAPI's `{detail: [...]}` validation-error array instead of assuming `detail` is always a string.
+- README: a short "What you need" section, one LAN-URL warning, and a note that mutating APIs are unauthenticated by design on a home LAN.
+- Plugin versionName **1.0.1** (`versionCode` 2). Image `ghcr.io/imanunator/wallpaparr:v1.0.1` / `:1.0.1` / `:latest` from the `v1.0.1` tag.
 
 ## 1.0.0 - 2026-09-21
 

@@ -14,7 +14,7 @@
   <a href="https://github.com/iManunator/wallpaparr/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/iManunator/wallpaparr?display_name=tag&sort=semver&label=release"></a>
   <a href="https://github.com/iManunator/wallpaparr/pkgs/container/wallpaparr"><img alt="GHCR" src="https://img.shields.io/badge/ghcr.io-imanunator%2Fwallpaparr-0ea5e9?logo=docker&logoColor=white"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-e2b657"></a>
-  <img alt="Version 1.0.0" src="https://img.shields.io/badge/version-1.0.0-7ad0c4"/>
+  <img alt="Version 1.0.1" src="https://img.shields.io/badge/version-1.0.1-7ad0c4"/>
 </p>
 
 <p align="center">
