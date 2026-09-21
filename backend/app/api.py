@@ -79,18 +79,18 @@ def _public_url(request: Request, layout: str, filename: str) -> str:
     return f"{base}/api/wallpaper/image/{encoded_layout}/{encoded_file}"
 
 
-@router.get("/api/health")
+@router.api_route("/api/health", methods=["GET", "HEAD"])
 def health() -> dict[str, Any]:
     return {"ok": True, "service": "wallpaparr", "version": __version__}
 
 
-@router.get("/api/layouts/list")
+@router.api_route("/api/layouts/list", methods=["GET", "HEAD"])
 def layouts_list() -> list[str]:
     seed_presets()
     return list_layouts()
 
 
-@router.get("/api/layouts/with-images")
+@router.api_route("/api/layouts/with-images", methods=["GET", "HEAD"])
 def layouts_with_images() -> list[str]:
     names = catalog_store.layouts_with_images()
     return names
@@ -221,23 +221,23 @@ def suite_options() -> dict[str, Any]:
     }
 
 
-@router.get("/api/genres/list")
+@router.api_route("/api/genres/list", methods=["GET", "HEAD"])
 def genres_list() -> list[str]:
     return unique_values(catalog_store.load_catalog(), "genres")
 
 
-@router.get("/api/ages/list")
+@router.api_route("/api/ages/list", methods=["GET", "HEAD"])
 def ages_list() -> list[str]:
     return unique_values(catalog_store.load_catalog(), "official_rating")
 
 
-@router.get("/api/year/list")
+@router.api_route("/api/year/list", methods=["GET", "HEAD"])
 def year_list() -> list[str]:
     years = unique_values(catalog_store.load_catalog(), "year")
     return sorted(years, reverse=True)
 
 
-@router.get("/api/wallpaper/status", response_model=WallpaperStatus)
+@router.api_route("/api/wallpaper/status", methods=["GET", "HEAD"], response_model=WallpaperStatus)
 def wallpaper_status(
     request: Request,
     layout: str = Query("Default"),
@@ -331,7 +331,7 @@ def _fill_status(request: Request, status: WallpaperStatus, selected, settings) 
     return status
 
 
-@router.get("/api/wallpaper/image/{layout}/{filename:path}")
+@router.api_route("/api/wallpaper/image/{layout}/{filename:path}", methods=["GET", "HEAD"])
 def wallpaper_image(layout: str, filename: str):
     path = catalog_store.wallpaper_file(layout, filename)
     if not path:
