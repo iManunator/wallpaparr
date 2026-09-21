@@ -92,13 +92,27 @@ def records_to_cleanup(
     current_items: list[MediaItem],
     layout: str,
 ) -> list[WallpaperRecord]:
+    """Records for ``layout`` whose title is no longer in ``current_items``.
+
+    Scoped to the source(s) actually fetched this run (derived from
+    ``current_items``, not the caller's ``source=`` string — demo mixes
+    jellyfin/jellyseerr/plex-labeled fixtures). Without this, cleaning up
+    after a Jellyfin-only batch would delete every Seerr-sourced wallpaper
+    in the layout (and vice versa), since they were never in ``keep``.
+    """
     keep: set[str] = set()
+    sources: set[str] = set()
     for item in current_items:
         keep |= media_ids_of(item)
         keep.add(f"{item.title.strip().lower()}|{item.year or ''}")
+        sources.add((item.source or "").strip().lower())
     doomed = []
     for rec in catalog:
         if rec.layout.lower() != layout.lower():
+            continue
+        # Records with no recorded source (older rows) stay eligible for
+        # cleanup as before; only a *known*, different source is protected.
+        if sources and rec.source and rec.source.strip().lower() not in sources:
             continue
         rec_ids = rec.media_ids()
         title_key = f"{rec.title.strip().lower()}|{rec.year or ''}"
