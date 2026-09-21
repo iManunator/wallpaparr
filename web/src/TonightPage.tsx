@@ -85,7 +85,7 @@ export function TonightPage({ onEdit, onGenerate, onSettings, onGallery }: Tonig
     (queueId === "continue_watching" && watch?.id === "partial");
   const showQueueBadge = Boolean(queueLabel) && !queueDuplicatesWatch;
   const motionStyle = (payload?.motion?.style || "parallax") as MotionStyle;
-  const motionPreset = previewPreset || payload?.motion?.preset || "cinematic";
+  const motionPreset = previewPreset || payload?.motion?.preset || "balanced";
   const intensity = intensityFromPreset(motionPreset) || clampIntensity(payload?.motion?.intensity ?? 0.55);
   const duration = PRESET_DURATION[motionPreset] || 12;
   const motionVars = motionPreviewVars(motionStyle, intensity, duration, {

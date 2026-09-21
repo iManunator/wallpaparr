@@ -226,6 +226,37 @@ def test_jobs_generate_reports_progress(client):
     assert latest["id"] == job["id"]
 
 
+def test_jobs_generate_forwards_seerr_category(client, monkeypatch):
+    """Generate UI posts seerr_category on /api/jobs — must not be stripped."""
+    reset_for_tests()
+    seen: dict[str, object] = {}
+
+    def fake_run(request, job_id=None):
+        seen["source"] = request.source
+        seen["seerr_category"] = request.seerr_category
+        seen["job_id"] = job_id
+        return {"count": 0, "created": [], "skipped": [], "message": "ok"}
+
+    monkeypatch.setattr("app.api.run_generate", fake_run)
+    start = client.post(
+        "/api/jobs",
+        json={
+            "kind": "generate",
+            "layout": "Netflix Hero",
+            "source": "jellyseerr",
+            "seerr_category": "movies_upcoming",
+            "limit": 1,
+            "skip_existing": False,
+            "motion": False,
+        },
+    )
+    assert start.status_code == 200
+    body = _wait_job(client, start.json()["id"], ticks=200)
+    assert body["status"] == "done", body
+    assert seen["source"] == "jellyseerr"
+    assert seen["seerr_category"] == "movies_upcoming"
+
+
 def test_jobs_latest_idle_and_unknown_kind(client):
     reset_for_tests()
     idle = client.get("/api/jobs/latest").json()

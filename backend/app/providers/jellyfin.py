@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from urllib.parse import urljoin
 
+from app import __version__
 from app.models import MediaItem
 from app.providers import HttpClient
 
@@ -106,7 +107,7 @@ class JellyfinProvider:
     def auth_headers(self) -> dict[str, str]:
         auth = (
             'MediaBrowser Client="Wallpaparr", Device="wallpaparr", '
-            f'DeviceId="wallpaparr", Version="1.0.0"'
+            f'DeviceId="wallpaparr", Version="{__version__}"'
         )
         if self.api_key:
             auth += f', Token="{self.api_key}"'

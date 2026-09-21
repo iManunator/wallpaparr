@@ -5,18 +5,24 @@
   "motion_quality": "light",
   "motion_style": "parallax",
   "motion_intensity": 0.55,
-  "motion_duration": null,
-  "motion_fps": 30,
+  "motion_duration": 15.0,
+  "motion_fps": 24,
   "overwrite_existing": false,
   "editor_theme": "cinema",
-  "motion_preset": "cinematic",
+  "motion_preset": "balanced",
   "light_leak": true,
   "motion_vary": true,
+  "motion_edge_fade": true,
+  "motion_edge_fade_seconds": 1.0,
+  "motion_fly_in": true,
+  "motion_fly_in_seconds": 1.0,
   "taste_profile": "tonight",
   "taste_weights": {
-    "unwatched": 50,
-    "newly_added": 30,
-    "requestable": 20
+    "unwatched": 30,
+    "continue_watching": 20,
+    "watched": 15,
+    "newly_added": 20,
+    "seerr_trending": 15
   },
   "overlays_enabled": false,
   "overlay_clock": true,
@@ -36,14 +42,19 @@
     "api_key": "",
     "language": "en-US"
   },
+  "omdb": {
+    "api_key": ""
+  },
   "cron_jobs": [
     {
       "enabled": false,
       "cron": "0 4 * * *",
       "layout": "Netflix Hero",
       "source": "jellyfin",
+      "seerr_category": "trending",
       "skip_existing": true,
       "replace_existing": false,
+      "refresh_status": false,
       "cleanup": true,
       "motion": false,
       "limit": 20,

@@ -710,19 +710,7 @@ def jobs_start(body: dict[str, Any] = Body(default_factory=dict)) -> dict[str, A
     kind = str(body.get("kind") or "generate").strip().lower()
     try:
         if kind == "generate":
-            fields = (
-                "layout",
-                "source",
-                "limit",
-                "skip_existing",
-                "replace_existing",
-                "refresh_status",
-                "cleanup",
-                "motion",
-                "ids",
-                "skip_ids",
-            )
-            payload = {key: body[key] for key in fields if key in body}
+            payload = {key: body[key] for key in GenerateRequest.model_fields if key in body}
             request = GenerateRequest(**payload)
 
             def worker(job_id: str) -> dict[str, Any]:

@@ -81,7 +81,7 @@ curl -sf http://127.0.0.1:8787/api/dashboard
 # equivalent first-time setup
 python3 -m venv backend/.venv
 backend/.venv/bin/python -m pip install -r backend/requirements-dev.txt
-cd web && npm install && cd ..
+cd web && npm ci && cd ..
 
 ./scripts/test.sh
 ```

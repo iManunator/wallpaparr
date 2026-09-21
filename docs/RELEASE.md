@@ -10,12 +10,13 @@ The product version lives in `VERSION`. Binaries are **not** committed to git. T
 
 ## Permissions (why `packages: write` exists)
 
-Both workflows declare:
+CI grants `contents: read` at the workflow level. Only the **image** job also has `packages: write` so `GITHUB_TOKEN` can push to GHCR on `main`. PRs build the image locally and upload an artifact — they do not log in to GHCR.
 
 ```yaml
 permissions:
-  contents: read   # CI — checkout
-  packages: write  # GHCR push with GITHUB_TOKEN
+  contents: read   # checkout
+# image job additionally:
+#   packages: write  # GHCR push with GITHUB_TOKEN
 ```
 
 Release also needs `contents: write` so it can create the GitHub Release and upload APKs.
