@@ -1,0 +1,7 @@
+<resources>
+    <string name="plugin_name">Wallpaparr</string>
+    <string name="plugin_description">Cinematic stills and baked motion VIDEO from your Wallpaparr suite. Open a row for what it does and when to use it.</string>
+    <string name="plugin_uuid">dba9a12f-6252-4172-b5a3-8668d0523afb</string>
+    <string name="projectivy_not_installed">This plugin requires Projectivy Launcher, which does not seem to be installed.</string>
+    <string name="settings">Settings</string>
+</resources>

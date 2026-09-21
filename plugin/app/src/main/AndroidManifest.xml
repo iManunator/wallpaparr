@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="MissingLeanbackLauncher">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="true" />
+
+    <queries>
+        <package android:name="com.spocky.projengmenu" />
+        <package android:name="org.moonfin.androidtv" />
+        <package android:name="org.jellyfin.androidtv" />
+        <package android:name="nl.jknaapen.fladder" />
+        <package android:name="org.xbmc.kodi" />
+        <package android:name="com.github.damontecres.wholphin" />
+        <package android:name="com.hritwik.avoid" />
+    </queries>
+
+    <application
+        android:allowBackup="true"
+        android:label="@string/plugin_name"
+        android:supportsRtl="true"
+        android:icon="@mipmap/ic_launcher"
+        android:banner="@mipmap/ic_banner"
+        android:usesCleartextTraffic="true"
+        android:theme="@style/Theme.ProjectivyWallpaperProvider">
+
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="true"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity-alias
+            android:name=".ProjectivySettingsAlias"
+            android:enabled="true"
+            android:exported="true"
+            android:targetActivity=".SettingsActivity" />
+
+        <provider
+            android:name=".WallpaperProvider"
+            android:authorities="com.imanunator.wallpaparr.wallpaper"
+            android:exported="true">
+            <meta-data
+                android:name="updateMode"
+                android:value="16" />
+            <meta-data
+                android:name="itemsCacheDurationMillis"
+                android:value="0" />
+        </provider>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.imanunator.wallpaparr.media"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <service
+            android:name=".WallpaperProviderService"
+            android:exported="true"
+            android:label="@string/plugin_name"
+            android:icon="@mipmap/ic_launcher"
+            android:banner="@mipmap/ic_banner"
+            tools:ignore="ExportedService">
+
+            <intent-filter>
+                <action android:name="tv.projectivy.plugin.WALLPAPER_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="apiVersion"
+                android:value="1" />
+            <meta-data
+                android:name="uuid"
+                android:value="@string/plugin_uuid" />
+            <meta-data
+                android:name="name"
+                android:value="@string/plugin_name" />
+            <meta-data
+                android:name="settingsActivity"
+                android:value=".ProjectivySettingsAlias" />
+            <meta-data
+                android:name="authority"
+                android:value="com.imanunator.wallpaparr.wallpaper" />
+            <!-- Keep cache short: Projectivy randomly cycles the returned list.
+                 We return one wallpaper and preload the next ourselves. -->
+            <meta-data
+                android:name="itemsCacheDurationMillis"
+                android:value="1000" />
+            <meta-data
+                android:name="updateMode"
+                android:value="1" />
+        </service>
+
+        <receiver
+            android:name=".WallpaperEventReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="tv.projectivy.launcher.action.REFRESH_WALLPAPER" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>
