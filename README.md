@@ -18,6 +18,7 @@
 </p>
 
 <p align="center">
+  <a href="#what-you-need">What you need</a> ·
   <a href="#downloads">Downloads</a> ·
   <a href="#get-it-running">Get it running</a> ·
   <a href="#connect-your-library-and-generate">Connect your library</a> ·
@@ -54,6 +55,16 @@ Wallpaparr is a small self-hosted server plus a Projectivy plugin. The server pu
 
 ---
 
+## What you need
+
+- **Docker** (or Compose) on a LAN host the TV can reach
+- **Projectivy** on Android TV / Google TV for the plugin
+- **Jellyfin** and/or **Jellyseerr/Seerr** only when you want your own library — demo mode works with neither
+
+The box is a container on **`:8787`** with a `data/` volume, plus the Projectivy plugin on the TV.
+
+---
+
 ## Downloads
 
 | Get | Link |
@@ -80,7 +91,11 @@ docker run --name wallpaparr --restart unless-stopped -d -p 8787:8787 \
   ghcr.io/imanunator/wallpaparr:latest
 ```
 
-Open **http://127.0.0.1:8787** — Tonight is the home page. With nothing configured yet, it auto-seeds a demo catalog of license-safe cinematic stills so you can see it working immediately — no Jellyfin required for this step.
+Open **http://127.0.0.1:8787** on the host — Tonight is the home page. With nothing configured yet, it auto-seeds a demo catalog of license-safe cinematic stills so you can see it working immediately — no Jellyfin required. Same offline walkthrough: **[docs/VERIFY.md](docs/VERIFY.md)**.
+
+**LAN URL:** `PUBLIC_BASE_URL` and the plugin Server URL must be the host's LAN IP or a hostname the TV can resolve — never `127.0.0.1` / `localhost`. The TV has to reach the box; browsing the UI from the host itself can still use loopback.
+
+Mutating APIs (settings, generate, delete) are unauthenticated by design for a trusted home LAN. Don't expose `:8787` to the internet without a reverse-proxy auth layer.
 
 Prefer Docker Compose, want to build from source, or need to put the generated gallery on a different disk than the container? See **[docs/INSTALL.md](docs/INSTALL.md)**.
 
@@ -104,7 +119,7 @@ That's the whole loop: connect → generate → (optionally) schedule. Everythin
 
 1. Sideload [`wallpaparr-plugin-release.apk`](https://github.com/iManunator/wallpaparr/releases/latest/download/wallpaparr-plugin-release.apk).
 2. Projectivy → Appearance → Wallpaper → **Wallpaparr**.
-3. Server URL: `http://YOUR_LAN_IP:8787` (not `127.0.0.1` — the TV has to reach it over the network).
+3. Server URL: the same LAN URL as `PUBLIC_BASE_URL` (e.g. `http://YOUR_LAN_IP:8787`).
 4. Pick mode **Tonight's mix**. Enable **Play baked motion (MP4)** if you baked any.
 
 ```bash
