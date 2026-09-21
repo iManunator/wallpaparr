@@ -504,9 +504,11 @@ describe("Tonight page", () => {
     expect(await screen.findByRole("heading", { name: "Tonight" })).toBeInTheDocument();
     expect((await screen.findAllByText("Northlight")).length).toBeGreaterThan(0);
     const stage = screen.getByLabelText("Projectivy home screen preview");
-    expect(stage.querySelector("img")?.style.getPropertyValue("--motion-duration")).toBe("12s");
+    expect(stage.querySelector("img")?.style.getPropertyValue("--motion-duration")).toBe("15s");
+    const beforeZoom = stage.querySelector("img")?.style.getPropertyValue("--motion-zoom-to");
     fireEvent.click(screen.getByRole("button", { name: "Bold" }));
-    expect(stage.querySelector("img")?.style.getPropertyValue("--motion-duration")).toBe("10s");
+    expect(stage.querySelector("img")?.style.getPropertyValue("--motion-duration")).toBe("15s");
+    expect(stage.querySelector("img")?.style.getPropertyValue("--motion-zoom-to")).not.toBe(beforeZoom);
 
     fireEvent.click(screen.getByRole("button", { name: "Open in editor" }));
     expect(await screen.findByRole("heading", { name: "Layout editor" })).toBeInTheDocument();

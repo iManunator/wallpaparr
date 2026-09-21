@@ -301,7 +301,7 @@ def test_intensity_presets():
     assert intensity_from_preset("subtle") == 0.16
     assert intensity_from_preset("balanced") == 0.355
     assert intensity_from_preset("bold") == 0.96
-    assert intensity_from_preset("nope") == 0.55
+    assert intensity_from_preset("nope") == 0.355
     profile = profile_from_settings(AppSettings(motion_preset="bold", motion_intensity=0.55))
     assert profile.intensity == 0.96
     assert profile.light_leak is True
