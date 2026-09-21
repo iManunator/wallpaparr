@@ -18,6 +18,10 @@
 </p>
 
 <p align="center">
+  <a href="https://ko-fi.com/Z3W827EG1B"><img alt="ko-fi" src="https://ko-fi.com/img/githubbutton_sm.svg"></a>
+</p>
+
+<p align="center">
   <a href="#downloads">Downloads</a> ·
   <a href="#get-it-running">Get it running</a> ·
   <a href="#connect-your-library-and-generate">Connect your library</a> ·
