@@ -237,7 +237,9 @@ def test_encoder_is_projectivy_cfr_without_bframes():
 
 def test_ken_burns_window_is_subpixel_pingpong():
     """Bake must zoom *in* and rest at the loop join — not a bipolar sine zoom-out."""
-    profile = MotionProfile(style="parallax", intensity=0.55, duration=12, fps=30, width=1920, height=1080)
+    profile = MotionProfile(
+        style="parallax", intensity=0.55, duration=12, fps=30, width=1920, height=1080, fly_in=False,
+    )
     start = ken_burns_window(0, profile, 1920, 1080)
     peak = ken_burns_window(max_motion_frame(profile.frames), profile, 1920, 1080)
     last = ken_burns_window(profile.frames - 1, profile, 1920, 1080)
@@ -404,7 +406,7 @@ def test_vary_on_is_seeded_within_preset_band():
 
 
 def test_preview_vars_and_bake_share_variation_helper():
-    base = MotionProfile(style="parallax", intensity=0.55, duration=12, width=1920, height=1080)
+    base = MotionProfile(style="parallax", intensity=0.55, duration=12, width=1920, height=1080, fly_in=False)
     varied = vary_motion_profile(base, enabled=True, seed="demo-jf-1", preset="cinematic")
     css = motion_preview_vars(varied)
     start = ken_burns_window(0, varied, 1920, 1080)
@@ -569,7 +571,7 @@ def test_motion_profile_dataclass_defaults_match_app_settings():
 
 
 def test_fly_in_zooms_in_further_at_start_than_normal_curve():
-    base = MotionProfile(style="kenburns", intensity=0.55, duration=4.0, fps=30)
+    base = MotionProfile(style="kenburns", intensity=0.55, duration=4.0, fps=30, fly_in=False)
     boosted = MotionProfile(
         style="kenburns", intensity=0.55, duration=4.0, fps=30, fly_in=True, fly_in_seconds=1.0,
     )

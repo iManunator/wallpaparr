@@ -812,7 +812,10 @@ def test_media_preview_rejects_huge_limit(client):
 
 
 def test_artwork_rejects_unsafe_item_id(client):
-    assert client.get("/api/media/artwork/..").status_code == 404
-    assert client.get("/api/media/artwork/%2e%2e%2fetc%2fpasswd").status_code == 404
+    # `/artwork/..` is normalized by the client to `/api/media` (200). Use a
+    # single-segment id that still contains a traversal token.
+    assert client.get("/api/media/artwork/..hidden").status_code == 404
+    assert client.get("/api/media/artwork/foo..bar").status_code == 404
+    assert client.get("/api/media/logo/not%20valid").status_code == 404
     assert client.get("/api/media/logo/foo/bar").status_code == 404
     assert client.get("/api/media/artwork/demo-jf-1").status_code == 200

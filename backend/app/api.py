@@ -45,7 +45,7 @@ _MEDIA_ID = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
 def _safe_media_id(value: str | None) -> str | None:
     """Reject path characters so artwork/logo proxy IDs cannot traverse Jellyfin URLs."""
     text = str(value or "").strip()
-    if not text or _MEDIA_ID.fullmatch(text) is None:
+    if not text or ".." in text or text in {".", ".."} or _MEDIA_ID.fullmatch(text) is None:
         return None
     return text
 
