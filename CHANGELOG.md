@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Generate jobs now keep the selected Jellyseerr category (`seerr_category`) instead of always falling back to trending.
+- `/api/health` version is read from the repo `VERSION` file (was a stale `1.2.7`).
+- Wallpaper image paths reject directory traversal; missing layouts no longer create empty gallery folders.
+- Corrupt `config.json` / `catalog.json` no longer 500 the whole API; JSON writes are atomic.
+- `config.example.json` and `.env.example` match runtime settings defaults and documented `SUITE_*` paths.
+- CI: `npm ci`, frontend cache, image publish waits for backend/frontend tests, tighter `packages: write` scope.
+
 ## 1.0.0 - 2026-09-21
 
 Initial public release.

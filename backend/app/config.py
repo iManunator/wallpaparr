@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 
+from app.fsutil import write_text_atomic
 from app.models import AppSettings
 
 ROOT = Path(os.environ.get("SUITE_ROOT", Path(__file__).resolve().parents[1]))
@@ -25,8 +26,13 @@ def ensure_dirs() -> None:
 def load_settings() -> AppSettings:
     ensure_dirs()
     if CONFIG_PATH.is_file():
-        data = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
-        return AppSettings.model_validate(data)
+        try:
+            data = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+            return AppSettings.model_validate(data)
+        except (OSError, json.JSONDecodeError, ValueError):
+            # Leave the broken file on disk so the operator can repair it;
+            # do not overwrite with defaults.
+            return AppSettings()
     settings = AppSettings()
     save_settings(settings)
     return settings
@@ -34,7 +40,7 @@ def load_settings() -> AppSettings:
 
 def save_settings(settings: AppSettings) -> None:
     ensure_dirs()
-    CONFIG_PATH.write_text(settings.model_dump_json(indent=2), encoding="utf-8")
+    write_text_atomic(CONFIG_PATH, settings.model_dump_json(indent=2))
 
 
 def public_base_url(settings: AppSettings | None = None) -> str:

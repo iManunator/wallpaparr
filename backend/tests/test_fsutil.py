@@ -57,6 +57,19 @@ def test_promote_temp_overwrites_existing_dest(tmp_path: Path):
     assert not src.exists()
 
 
+def test_write_text_atomic_replaces_dest(tmp_path: Path):
+    dest = tmp_path / "data" / "config.json"
+    dest.parent.mkdir(parents=True)
+    dest.write_text("{broken", encoding="utf-8")
+    from app.fsutil import write_text_atomic
+
+    out = write_text_atomic(dest, '{"ok": true}')
+    assert out == dest
+    assert dest.read_text(encoding="utf-8") == '{"ok": true}'
+    leftovers = list(dest.parent.glob(".config.json.*.tmp"))
+    assert leftovers == []
+
+
 def test_promote_temp_with_simulated_separate_roots(tmp_path: Path):
     """Two sibling trees (tmp vs data/gallery) — still moves when rename works."""
     tmp_root = tmp_path / "tmp"

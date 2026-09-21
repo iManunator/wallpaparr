@@ -27,5 +27,7 @@ def load_ops() -> dict[str, Any]:
 def record_event(kind: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
     data = load_ops()
     data[kind] = {"at": time.time(), **(payload or {})}
-    _path().write_text(json.dumps(data, indent=2), encoding="utf-8")
+    from app.fsutil import write_text_atomic
+
+    write_text_atomic(_path(), json.dumps(data, indent=2))
     return data

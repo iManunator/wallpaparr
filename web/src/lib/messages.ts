@@ -25,12 +25,32 @@ export function motionToast(result: { message?: string; count?: number; generate
   return { kind: n ? "ok" : "info", text };
 }
 
+function detailText(detail: unknown): string | undefined {
+  if (typeof detail === "string" && detail.trim()) return detail;
+  if (Array.isArray(detail)) {
+    const parts = detail
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item && typeof item === "object" && "msg" in item) {
+          return String((item as { msg: unknown }).msg || "");
+        }
+        return "";
+      })
+      .filter(Boolean);
+    return parts.length ? parts.join("; ") : undefined;
+  }
+  return undefined;
+}
+
 export function errorToast(err: unknown, fallback: string): { kind: "error"; text: string } {
   const raw = err instanceof Error ? err.message : String(err || fallback);
   let text = raw;
   try {
-    const parsed = JSON.parse(raw) as { detail?: string };
-    if (parsed?.detail) text = parsed.detail;
+    const parsed = JSON.parse(raw) as { detail?: unknown; message?: unknown };
+    text =
+      detailText(parsed?.detail) ||
+      (typeof parsed?.message === "string" ? parsed.message : "") ||
+      raw;
   } catch {
     /* keep raw */
   }

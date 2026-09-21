@@ -283,7 +283,7 @@ function GeneratePage() {
         </div>
         <div className="card">
           <h3>Motion preview</h3>
-          <p className="muted">See {settings?.motion_preset || "cinematic"} {style} on demo art before you bake ffmpeg loops.</p>
+          <p className="muted">See {settings?.motion_preset || "balanced"} {style} on demo art before you bake ffmpeg loops.</p>
           <label>
             <input
               type="checkbox"
@@ -312,7 +312,7 @@ function DashboardPage() {
   const [data, setData] = useState<Record<string, any> | null>(null);
   const [error, setError] = useState("");
   useEffect(() => {
-    api.dashboard().then(setData).catch((err) => setError(String(err)));
+    api.dashboard().then(setData).catch((err) => setError(errorToast(err, "Could not load dashboard").text));
   }, []);
   if (!data) return <p>{error || "Loading…"}</p>;
   const gallery = data.gallery || {};
@@ -336,7 +336,7 @@ function DashboardPage() {
         </article>
         <article className="card">
           <h3>Motion</h3>
-          <p className="dash-stat">{data.motion?.preset || "cinematic"}</p>
+          <p className="dash-stat">{data.motion?.preset || "balanced"}</p>
           <p className="muted">{data.motion?.style} · {data.motion?.quality}{data.motion?.light_leak ? " · leak" : ""}{data.motion?.vary !== false ? " · variety" : ""}</p>
         </article>
         <article className="card">

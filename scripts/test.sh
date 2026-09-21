@@ -18,7 +18,7 @@ fi
 
 echo "==> frontend vitest"
 if [[ ! -d "$ROOT/web/node_modules" ]]; then
-  (cd "$ROOT/web" && npm install)
+  (cd "$ROOT/web" && npm ci)
 fi
 (cd "$ROOT/web" && npm test)
 

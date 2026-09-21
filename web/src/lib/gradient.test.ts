@@ -45,5 +45,11 @@ describe("toast copy", () => {
 
   it("parses fastapi error JSON", () => {
     expect(errorToast(new Error('{"detail":"Layout not found"}'), "fail").text).toBe("Layout not found");
+    expect(
+      errorToast(
+        new Error('{"detail":[{"loc":["body","limit"],"msg":"Input should be a valid integer"}]}'),
+        "fail",
+      ).text,
+    ).toBe("Input should be a valid integer");
   });
 });

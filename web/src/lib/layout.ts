@@ -137,6 +137,7 @@ export type GenerateRequest = {
   motion: boolean;
   ids?: string[];
   skip_ids?: string[];
+  seerr_category?: string;
 };
 
 export const SLOTS = [

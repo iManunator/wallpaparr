@@ -17,7 +17,6 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 env:
   IMAGE: ghcr.io/imanunator/wallpaparr
@@ -54,8 +53,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
       - name: Install
-        run: npm install
+        run: npm ci
       - name: Test
         run: npm test
       - name: Build
@@ -103,7 +104,9 @@ jobs:
 
   image:
     # Publish GHCR only on main (and tags, if this workflow ever runs there).
+    # Wait for backend + frontend so a failing test cannot push :latest.
     # Job-level packages: write is required for docker/login-action + push.
+    needs: [backend, frontend]
     permissions:
       contents: read
       packages: write
