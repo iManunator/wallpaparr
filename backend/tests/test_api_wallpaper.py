@@ -265,12 +265,14 @@ def test_dashboard_and_tonight(client):
     assert dash["gallery"]["count"] == 6
     assert dash["providers"]["demo"]["configured"] is True
     assert dash["taste"]["profile"]
+    assert dash["cron"]["errors"] == []
     tonight = client.get("/api/tonight", params={"layout": "Netflix Hero"}).json()
     assert tonight["status"]["imageUrl"]
     assert tonight["status"]["title"]
     assert tonight["profile"]
     assert tonight["motion"]["vary"] is True
     assert tonight["motion"]["seed"]
+    assert tonight["motion"]["duration"] == 15.0
     assert tonight["preview"]["layered"] is True
     assert tonight["preview"]["itemId"]
     assert tonight["preview"]["artworkUrl"]
@@ -668,3 +670,112 @@ def test_layouts_delete_rejects_bundled_preset(client):
     deleted = client.post("/api/layouts/delete/Netflix Hero")
     assert deleted.status_code == 400
     assert "Netflix Hero" in client.get("/api/layouts/list").json()
+
+
+def test_get_settings_redacts_provider_keys(client):
+    from app.config import REDACTED_API_KEY, load_settings, save_settings
+    from app.models import AppSettings
+
+    save_settings(
+        AppSettings(
+            jellyfin={"url": "http://jf:8096", "api_key": "super-secret", "user_id": "u"},
+            jellyseerr={"url": "http://seerr:5055", "api_key": "seerr-secret"},
+            tmdb={"api_key": "tmdb-secret", "language": "en-US"},
+            omdb={"api_key": "omdb-secret"},
+        )
+    )
+    body = client.get("/api/settings").json()
+    assert body["jellyfin"]["api_key"] == REDACTED_API_KEY
+    assert body["jellyseerr"]["api_key"] == REDACTED_API_KEY
+    assert body["tmdb"]["api_key"] == REDACTED_API_KEY
+    assert body["omdb"]["api_key"] == REDACTED_API_KEY
+    assert "super-secret" not in str(body)
+    stored = load_settings()
+    assert stored.jellyfin["api_key"] == "super-secret"
+
+
+def test_post_settings_keeps_redacted_keys_and_clears_blank(client):
+    from app.config import REDACTED_API_KEY, load_settings, save_settings
+    from app.models import AppSettings
+
+    save_settings(
+        AppSettings(
+            jellyfin={"url": "http://jf:8096", "api_key": "keep-me", "user_id": "u"},
+            tmdb={"api_key": "replace-me", "language": "en-US"},
+            omdb={"api_key": "drop-me"},
+        )
+    )
+    settings = client.get("/api/settings").json()
+    assert settings["jellyfin"]["api_key"] == REDACTED_API_KEY
+    settings["tmdb"]["api_key"] = "fresh-tmdb"
+    settings["omdb"]["api_key"] = ""
+    assert client.post("/api/settings", json=settings).status_code == 200
+    stored = load_settings()
+    assert stored.jellyfin["api_key"] == "keep-me"
+    assert stored.tmdb["api_key"] == "fresh-tmdb"
+    assert stored.omdb.get("api_key") == ""
+
+
+def test_post_settings_rejects_invalid_enabled_cron(client):
+    settings = client.get("/api/settings").json()
+    settings["cron_jobs"] = [
+        {
+            "enabled": True,
+            "name": "Broken",
+            "cron": "not a cron",
+            "layout": "Netflix Hero",
+            "source": "demo",
+        }
+    ]
+    response = client.post("/api/settings", json=settings)
+    assert response.status_code == 400
+    assert "Broken" in response.json()["detail"]
+    dash = client.get("/api/dashboard").json()
+    # Rejected save — dashboard still has no enabled broken job.
+    assert dash["cron"]["errors"] == []
+
+
+def test_dashboard_surfaces_saved_invalid_cron(client):
+    from app.config import save_settings
+    from app.models import AppSettings
+
+    save_settings(
+        AppSettings(
+            cron_jobs=[
+                {
+                    "enabled": True,
+                    "name": "Nightly",
+                    "cron": "99 99 * * *",
+                    "layout": "Netflix Hero",
+                    "source": "demo",
+                }
+            ]
+        )
+    )
+    dash = client.get("/api/dashboard").json()
+    assert len(dash["cron"]["errors"]) == 1
+    assert dash["cron"]["errors"][0]["name"] == "Nightly"
+    assert dash["cron"]["errors"][0]["cron"] == "99 99 * * *"
+
+
+def test_wallpaper_status_taste_tonight_uses_custom_weights(client):
+    from app.config import save_settings
+    from app.models import AppSettings
+
+    save_settings(
+        AppSettings(
+            taste_profile="cinephile",
+            taste_weights={"continue_watching": 100},
+        )
+    )
+    # Plugin Tonight's mix still sends pool=taste:tonight.
+    body = client.get(
+        "/api/wallpaper/status",
+        params={"layout": "Netflix Hero", "pool": "taste:tonight"},
+    ).json()
+    assert body["title"] == "Harbor Season"
+    named = client.get(
+        "/api/wallpaper/status",
+        params={"layout": "Netflix Hero", "profile": "cinephile"},
+    ).json()
+    assert named["title"] == "Harbor Season"

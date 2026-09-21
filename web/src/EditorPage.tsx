@@ -15,7 +15,7 @@ import {
   type WallpaperRecord,
 } from "./lib/layout";
 import { errorToast } from "./lib/messages";
-import { clampIntensity, defaultDuration, describeMotion, intensityFromPreset, MOTION_PRESET_ORDER, motionPreviewVars, motionSeedKey, PRESET_DURATION, type MotionStyle } from "./lib/motion";
+import { clampIntensity, defaultDuration, describeMotion, intensityFromPreset, MOTION_PRESET_ORDER, motionPreviewVars, motionSeedKey, type MotionStyle } from "./lib/motion";
 import { prefersLogo, smartResizeLogo, clampLogoRect, tagShift } from "./lib/logo";
 import { keepWatchSlot } from "./lib/chrome";
 import { LAYOUT_DNA } from "./lib/queues";
@@ -179,7 +179,7 @@ export function EditorPage({ initialLayout }: { initialLayout?: string } = {}) {
   const artSrc = api.mediaArtwork(artId);
   const createdSlides = created.map(wallpaperSlide);
   const intensity = intensityFromPreset(motionPreset) || clampIntensity(0.55);
-  const previewDuration = PRESET_DURATION[motionPreset] || duration;
+  const previewDuration = duration || defaultDuration();
   const motionVars = motionPreviewVars(motionStyle, intensity, previewDuration, {
     vary: motionVary,
     seed: motionSeedKey(preview?.jellyfin_id, preview?.tmdb_id, artId, preview?.title),

@@ -7,7 +7,6 @@ import {
   intensityFromPreset,
   MOTION_PRESET_ORDER,
   motionPreviewVars,
-  PRESET_DURATION,
   type MotionStyle,
 } from "./lib/motion";
 import { QUEUE_LABELS, TASTE_PRESETS } from "./lib/queues";
@@ -34,7 +33,7 @@ export type TonightPayload = {
   };
   queues: Array<{ id: string; label: string; count: number; titles: string[] }>;
   profile: string;
-  motion: { style?: string; preset?: string; intensity?: number; light_leak?: boolean; vary?: boolean; seed?: string };
+  motion: { style?: string; preset?: string; intensity?: number; duration?: number | null; light_leak?: boolean; vary?: boolean; seed?: string };
   preview?: { artworkUrl?: string | null; itemId?: string | null; layered?: boolean };
 };
 
@@ -87,7 +86,7 @@ export function TonightPage({ onEdit, onGenerate, onSettings, onGallery }: Tonig
   const motionStyle = (payload?.motion?.style || "parallax") as MotionStyle;
   const motionPreset = previewPreset || payload?.motion?.preset || "balanced";
   const intensity = intensityFromPreset(motionPreset) || clampIntensity(payload?.motion?.intensity ?? 0.55);
-  const duration = PRESET_DURATION[motionPreset] || 12;
+  const duration = Number(payload?.motion?.duration || 15);
   const motionVars = motionPreviewVars(motionStyle, intensity, duration, {
     vary: payload?.motion?.vary !== false,
     seed: payload?.motion?.seed,

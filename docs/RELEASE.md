@@ -10,7 +10,7 @@ The product version lives in `VERSION`. Binaries are **not** committed to git. T
 
 ## Permissions (why `packages: write` exists)
 
-CI grants `contents: read` at the workflow level. Only the **image** job also has `packages: write` so `GITHUB_TOKEN` can push to GHCR on `main`. PRs build the image locally and upload an artifact — they do not log in to GHCR.
+CI grants `contents: read` at the workflow level. Only the **image** job also has `packages: write` so `GITHUB_TOKEN` can push to GHCR on `main`. That job waits on backend, frontend, **and** Android tests. PRs build the image locally and upload an artifact — they do not log in to GHCR.
 
 ```yaml
 permissions:
@@ -19,7 +19,7 @@ permissions:
 #   packages: write  # GHCR push with GITHUB_TOKEN
 ```
 
-Release also needs `contents: write` so it can create the GitHub Release and upload APKs.
+Release also needs `contents: write` so it can create the GitHub Release and upload APKs. `packages: write` is on the **release job**, not the whole workflow.
 
 | Workflow | Trigger | GHCR | APK |
 | --- | --- | --- | --- |

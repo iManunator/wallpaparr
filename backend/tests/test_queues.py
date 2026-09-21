@@ -129,6 +129,20 @@ def test_resolve_taste_weights_custom_and_unknown():
     assert resolve_taste_weights("missing") == TASTE_PRESETS["tonight"]
 
 
+def test_select_wallpaper_honors_custom_taste_weights(seeded_catalog):
+    picked = select_wallpaper(
+        seeded_catalog,
+        SelectionQuery(
+            layout="Netflix Hero",
+            profile="tonight",
+            taste_weights={"continue_watching": 100},
+        ),
+        rng=random.Random(1),
+    )
+    assert picked is not None
+    assert picked.title == "Harbor Season"
+
+
 def test_pin_bias_only_when_rng_supplied():
     catalog = [
         _rec(id="1", filename="a.jpg", title="Pinned", pinned=True, rating=1),

@@ -39,7 +39,7 @@ curl -sf http://127.0.0.1:8787/api/health
 Expected:
 
 ```json
-{"ok":true,"service":"wallpaparr","version":"1.0.0"}
+{"ok":true,"service":"wallpaparr","version":"1.0.1"}
 ```
 
 Compose healthcheck: `curl -sf http://127.0.0.1:8787/api/health` inside the container. UI: http://127.0.0.1:8787
@@ -90,7 +90,7 @@ If `python3 -m venv` fails, install `python3-venv` (Debian/Ubuntu) and retry.
 
 ## 5. Plugin APK
 
-**Primary:** GitHub **Release** asset [`wallpaparr-plugin-release.apk`](https://github.com/iManunator/wallpaparr/releases/latest/download/wallpaparr-plugin-release.apk) (tag `v1.0.0` after it is published). See [RELEASE.md](RELEASE.md).
+**Primary:** GitHub **Release** asset [`wallpaparr-plugin-release.apk`](https://github.com/iManunator/wallpaparr/releases/latest/download/wallpaparr-plugin-release.apk) (tag `v1.0.1` after it is published). See [RELEASE.md](RELEASE.md).
 
 CI also uploads:
 

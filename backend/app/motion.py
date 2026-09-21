@@ -55,11 +55,15 @@ _PAN_Y_RATIO_MAX = 0.18
 _DEFAULT_PAN_Y_RATIO = 0.14  # CSS --motion-y / --motion-x
 
 _BITRATE = {"light": "2800k", "standard": "4000k", "cinematic": "5500k"}
+# Quality/preset duration tables are historical. First-run and missing-field
+# fallbacks match AppSettings (15s / 24 fps / balanced) so bake, example
+# config, and Settings cannot diverge.
 _DEFAULT_DURATION = {"light": 8.0, "standard": 12.0, "cinematic": 16.0}
 _PRESET_DURATION = {"subtle": 16.0, "balanced": 14.0, "cinematic": 12.0, "bold": 10.0}
 _X264_PRESET = {"light": "fast", "standard": "medium", "cinematic": "slow"}
-# 30fps 1080p Main@L4.0 is Android TV safe and closer to the CSS preview.
-_DEFAULT_FPS = 30
+_DEFAULT_FPS = 24
+_DEFAULT_PRESET = "balanced"
+_DEFAULT_LOOP_SECONDS = 15.0
 # Working plate multiplier. Float EXTENT samples this bitmap; not zoompan 2× NN.
 _SUPER_SAMPLE = 2
 _LEAK_RGB = (255, 122, 58)
@@ -68,9 +72,11 @@ _LEAK_ALPHA = 41  # ffmpeg colorchannelmixer=aa=0.16
 # recreates its player on every wallpaper swap (docs/PROJECTIVY.md) with no
 # crossfade in the AIDL contract; landing that hard cut on a near-black frame
 # instead of mid-scene makes it read as an intentional transition. Both are
-# user-editable (motion_edge_fade_seconds / motion_fly_in_seconds); these are
-# just the defaults.
+# user-editable (motion_edge_fade_seconds / motion_fly_in_seconds).
+# ``_FADE_SECONDS`` is the encode-helper default when a caller does not pass
+# a duration; ``profile_from_settings`` uses AppSettings (1.0s).
 _FADE_SECONDS = 0.35
+_DEFAULT_EDGE_FADE_SECONDS = 1.0
 _FLY_IN_SECONDS = 1.0
 # Extra zoom-in at frame 0, eased out to exactly 0 by the end of the fly-in
 # window so it hands off to the normal Ken Burns curve with no jump.
@@ -78,7 +84,7 @@ _FLY_IN_ZOOM_BOOST = 0.35
 
 
 def intensity_from_preset(name: str | None) -> float:
-    return INTENSITY_PRESETS.get((name or "cinematic").strip().lower(), 0.55)
+    return INTENSITY_PRESETS.get((name or _DEFAULT_PRESET).strip().lower(), INTENSITY_PRESETS[_DEFAULT_PRESET])
 
 
 @dataclass(frozen=True)
@@ -172,15 +178,16 @@ def profile_from_settings(settings) -> MotionProfile:
     quality = str(getattr(settings, "motion_quality", None) or "light").strip().lower()
     if quality not in QUALITIES:
         quality = "light"
-    preset = str(getattr(settings, "motion_preset", None) or "cinematic").strip().lower()
+    preset = str(getattr(settings, "motion_preset", None) or _DEFAULT_PRESET).strip().lower()
     if preset not in INTENSITY_PRESETS:
-        preset = "cinematic"
+        preset = _DEFAULT_PRESET
     intensity = intensity_from_preset(preset)
     raw_intensity = getattr(settings, "motion_intensity", None)
     if raw_intensity is not None:
         raw_f = min(1.0, max(0.0, float(raw_intensity)))
         # Honor a custom slider when it diverges from the named preset.
-        if abs(raw_f - intensity) > 0.02 and preset == "cinematic" and abs(raw_f - 0.55) > 0.02:
+        cinematic = INTENSITY_PRESETS["cinematic"]
+        if abs(raw_f - intensity) > 0.02 and preset == "cinematic" and abs(raw_f - cinematic) > 0.02:
             intensity = raw_f
         elif abs(raw_f - intensity) <= 0.02:
             intensity = raw_f
@@ -189,16 +196,16 @@ def profile_from_settings(settings) -> MotionProfile:
     if duration:
         duration_f = float(duration)
     else:
-        duration_f = max(_DEFAULT_DURATION[quality], _PRESET_DURATION.get(preset, 12.0))
+        duration_f = _DEFAULT_LOOP_SECONDS
     duration_f = min(24.0, max(2.0, duration_f))
     fps = int(getattr(settings, "motion_fps", None) or _DEFAULT_FPS)
     fps = min(30, max(12, fps))
     style = str(getattr(settings, "motion_style", None) or "parallax")
     leak = bool(getattr(settings, "light_leak", True))
     edge_fade = bool(getattr(settings, "motion_edge_fade", True))
-    edge_fade_seconds = float(getattr(settings, "motion_edge_fade_seconds", None) or _FADE_SECONDS)
+    edge_fade_seconds = float(getattr(settings, "motion_edge_fade_seconds", None) or _DEFAULT_EDGE_FADE_SECONDS)
     edge_fade_seconds = min(2.5, max(0.1, edge_fade_seconds))
-    fly_in = bool(getattr(settings, "motion_fly_in", False))
+    fly_in = bool(getattr(settings, "motion_fly_in", True))
     fly_in_seconds = float(getattr(settings, "motion_fly_in_seconds", None) or _FLY_IN_SECONDS)
     fly_in_seconds = min(4.0, max(0.2, fly_in_seconds))
     return MotionProfile(
@@ -632,7 +639,8 @@ def generate_motion(
             quality_n = "light"
         profile = MotionProfile(
             quality=quality_n,
-            duration=_DEFAULT_DURATION[quality_n],
+            duration=_DEFAULT_LOOP_SECONDS,
+            fps=_DEFAULT_FPS,
             style="kenburns" if not chrome else "parallax",
         )
     use_chrome = bool(chrome and Path(chrome).is_file())

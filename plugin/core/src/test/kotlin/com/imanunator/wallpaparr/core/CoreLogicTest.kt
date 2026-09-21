@@ -65,6 +65,8 @@ class WallpaperPickModesTest {
         val q = WallpaperPickModes.resolve("tonight", "Hero", "", "", 30, 3, 0, 2026)
         assertEquals("taste:tonight", q.pool)
         assertEquals("random", q.sort)
+        assertNull(q.profile)
+        assertNull(q.queue)
     }
 
     @Test
@@ -74,11 +76,15 @@ class WallpaperPickModesTest {
         val trending = WallpaperPickModes.resolve("seerr_trending", "Hero", "", "", 30, 3, 0, 2026)
         val pinned = WallpaperPickModes.resolve("pinned", "Hero", "", "", 30, 3, 0, 2026)
         assertEquals("continue_watching", watching.pool)
+        assertEquals("continue_watching", watching.queue)
         assertEquals("latest", newest.sort)
         assertEquals("newly_added", newest.pool)
+        assertEquals("newly_added", newest.queue)
         assertEquals("source:jellyseerr", trending.pool)
+        assertEquals("seerr_trending", trending.queue)
         assertEquals("rating", trending.sort)
         assertEquals("pinned", pinned.pool)
+        assertEquals("pinned", pinned.queue)
     }
 
     @Test

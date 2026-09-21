@@ -3,9 +3,8 @@
 </p>
 
 <p align="center">
-  <strong>Cinematic live wallpapers for Projectivy.</strong><br/>
-  Stills and optional <em>parallax VIDEO</em> loops, generated from Jellyfin and Jellyseerr/Seerr,<br/>
-  queued with taste, previewed as tonight's home screen, served to the TV.
+  Cinematic live wallpapers for Projectivy, baked from your Jellyfin / Jellyseerr library.<br/>
+  Stills, or optional <em>parallax VIDEO</em> loops if you want the home screen to actually move.
 </p>
 
 <p align="center">
@@ -32,7 +31,7 @@
   <a href="CHANGELOG.md">Changelog</a>
 </p>
 
-**Wallpaparr** is an *arr-family* box that sits next to Jellyfin, baking cinematic live wallpapers for Projectivy.
+It's an *arr* box for the home screen: titles in, wallpaper out, Projectivy plays it on the TV.
 
 ---
 
@@ -43,29 +42,29 @@
 </p>
 
 <p align="center">
-  <em>An actual baked parallax loop (not a mockup) — Netflix Hero chrome over one of the license-safe demo stills. Same pipeline that runs against your own Jellyfin/Seerr library.</em>
+  <em>A real baked parallax loop, not a mockup — Netflix Hero chrome over a license-safe demo still. Same pipeline that runs against your Jellyfin/Seerr library.</em>
 </p>
 
-Wallpaparr is a small self-hosted server plus a Projectivy plugin. The server pulls titles from your Jellyfin library and/or Jellyseerr, bakes each one into a cinematic 16:9 wallpaper (title, rating, watch status, optional parallax motion), and the plugin serves them to Projectivy on your TV.
+You get a small server plus a Projectivy plugin. The server pulls titles, bakes a 16:9 wallpaper (title, rating, watch status, optional motion), and the plugin feeds that to the TV. Open Tonight in the web UI and you're looking at the next frame Projectivy will show.
 
 | Page | What it's for |
 | --- | --- |
-| **Tonight** | The home page — a live preview of the exact wallpaper Projectivy will show next. |
-| **Gallery** | Every generated wallpaper. Pin favorites, hide ones you never want, delete, or open full-screen. |
-| **Editor** | Design the look: layout, fonts, colors, badges, motion — six presets to start from, or build your own. |
-| **Generate** | Pull titles from Jellyfin/Jellyseerr and bake wallpapers for them, one batch at a time. |
-| **Settings** | Connect Jellyfin/Jellyseerr, set the taste mix, motion defaults, and cron schedules. |
-| **Dashboard** | At-a-glance health: gallery size, last cron run, provider status. |
+| **Tonight** | Home. Live preview of whatever the TV will show next. |
+| **Gallery** | Every still you've baked. Pin, hide, delete, or open full-screen (plays the MP4 when there is one). |
+| **Editor** | Layout, fonts, colors, badges, motion. Six presets if you don't want to start from a blank canvas. |
+| **Generate** | Pull a batch from Jellyfin/Jellyseerr and bake it. That's the whole job. |
+| **Settings** | URLs and API keys, taste mix, motion defaults, cron. |
+| **Dashboard** | Gallery size, last cron, whether the providers actually answered. |
 
 ---
 
 ## What you need
 
-- **Docker** (or Compose) on a LAN host the TV can reach
-- **Projectivy** on Android TV / Google TV for the plugin
-- **Jellyfin** and/or **Jellyseerr/Seerr** only when you want your own library — demo mode works with neither
+- **Docker** (or Compose) on a machine the TV can reach on the LAN
+- **Projectivy** on the Android TV / Google TV, if you want the plugin
+- **Jellyfin** and/or **Jellyseerr/Seerr** only when you're ready for your own titles — demo mode runs with neither
 
-The box is a container on **`:8787`** with a `data/` volume, plus the Projectivy plugin on the TV.
+The box is a container on **`:8787`** with a `data/` volume. The plugin lives on the TV.
 
 ---
 
@@ -81,7 +80,7 @@ docker pull ghcr.io/imanunator/wallpaparr:latest
 adb install -r wallpaparr-plugin-release.apk
 ```
 
-Older tagged versions, debug APKs, and CI artifact fallbacks: see [Downloads in the full reference](docs/REFERENCE.md) or [docs/RELEASE.md](docs/RELEASE.md).
+Older tags, debug APKs, and CI artifacts: [Downloads in the full reference](docs/REFERENCE.md) or [docs/RELEASE.md](docs/RELEASE.md).
 
 ---
 
@@ -95,27 +94,27 @@ docker run --name wallpaparr --restart unless-stopped -d -p 8787:8787 \
   ghcr.io/imanunator/wallpaparr:latest
 ```
 
-Open **http://127.0.0.1:8787** on the host — Tonight is the home page. With nothing configured yet, it auto-seeds a demo catalog of license-safe cinematic stills so you can see it working immediately — no Jellyfin required. Same offline walkthrough: **[docs/VERIFY.md](docs/VERIFY.md)**.
+Open **http://127.0.0.1:8787** on the host. Tonight is the home page. Nothing configured yet? It seeds a demo catalog of license-safe stills so you can see it working — no Jellyfin required. Same walkthrough: **[docs/VERIFY.md](docs/VERIFY.md)**.
 
-**LAN URL:** `PUBLIC_BASE_URL` and the plugin Server URL must be the host's LAN IP or a hostname the TV can resolve — never `127.0.0.1` / `localhost`. The TV has to reach the box; browsing the UI from the host itself can still use loopback.
+Give `PUBLIC_BASE_URL` (and the plugin's Server URL) the host's LAN IP or a hostname the TV can resolve. `127.0.0.1` / `localhost` only works from the host itself; the TV can't loop back into your laptop. Browsing the UI from the host is fine on loopback.
 
-Mutating APIs (settings, generate, delete) are unauthenticated by design for a trusted home LAN. Don't expose `:8787` to the internet without a reverse-proxy auth layer.
+There's no login. Settings, generate, and delete are open on purpose — this is a home-LAN box. Don't put `:8787` on the internet unless you've put auth on a reverse proxy in front of it.
 
-Prefer Docker Compose, want to build from source, or need to put the generated gallery on a different disk than the container? See **[docs/INSTALL.md](docs/INSTALL.md)**.
+Compose, building from source, or parking the gallery on a different disk: **[docs/INSTALL.md](docs/INSTALL.md)**.
 
 ---
 
 ## Connect your library and generate
 
-This is the part that turns the demo into *your* wallpapers.
+When the demo stills get old:
 
-1. Open **Settings** and fill in your **Jellyfin** URL + API key (and/or **Jellyseerr** URL + API key). Click **Test** next to each to confirm the connection.
-2. Open **Generate**, set **Source** to `Jellyfin` (or `Jellyseerr`, or `All configured`), pick a **Layout**, and click **Run batch**. This pulls titles from your library and bakes a wallpaper for each one.
-3. Check **Gallery** — your titles should now show up with real artwork, ratings, and watch status.
-4. Optional: check **Bake parallax / motion VIDEO** before running the batch (or bake it later per-title) for looping motion wallpapers instead of static stills.
-5. Optional: in **Settings → Cron / batch**, add a schedule so new/trending titles get generated automatically instead of running Generate by hand every time.
+1. **Settings** — Jellyfin URL + API key, and/or Jellyseerr URL + API key. Hit **Test** next to each before you walk away.
+2. **Generate** — Source `Jellyfin` (or `Jellyseerr`, or `All configured`), pick a layout, **Run batch**. That pulls titles and bakes a wallpaper for each.
+3. **Gallery** — your artwork, ratings, and watch status should be there.
+4. Optional: check **Bake parallax / motion VIDEO** on the batch (or bake later per title) if you want looping motion instead of stills.
+5. Optional: **Settings → Cron / batch** so new/trending titles generate themselves. A bad cron expression is rejected on save instead of quietly never running.
 
-That's the whole loop: connect → generate → (optionally) schedule. Everything else in the app (Editor, taste mix, queues) shapes *how* those wallpapers look and get picked, not whether they exist.
+That's the loop: connect → generate → maybe schedule. Editor, taste mix, and queues only change *how* the wallpapers look and get picked.
 
 ---
 
@@ -124,30 +123,30 @@ That's the whole loop: connect → generate → (optionally) schedule. Everythin
 1. Sideload [`wallpaparr-plugin-release.apk`](https://github.com/iManunator/wallpaparr/releases/latest/download/wallpaparr-plugin-release.apk).
 2. Projectivy → Appearance → Wallpaper → **Wallpaparr**.
 3. Server URL: the same LAN URL as `PUBLIC_BASE_URL` (e.g. `http://YOUR_LAN_IP:8787`).
-4. Pick mode **Tonight's mix**. Enable **Play baked motion (MP4)** if you baked any.
+4. Pick mode **Tonight's mix**. Turn on **Play baked motion (MP4)** if you baked any.
 
 ```bash
 adb connect TV_IP
 adb install -r wallpaparr-plugin-release.apk
 ```
 
-Package `com.imanunator.wallpaparr` · full pick-mode/deep-link details in [docs/PROJECTIVY.md](docs/PROJECTIVY.md).
+Package `com.imanunator.wallpaparr`. Pick modes and deep links: [docs/PROJECTIVY.md](docs/PROJECTIVY.md).
 
 ---
 
 ## Docs
 
-| Doc | Contents |
+| Doc | What's in it |
 | --- | --- |
-| [Reference](docs/REFERENCE.md) | Full feature list, architecture diagram, API contract, Wallpaparr vs SeerChannel |
-| [Install](docs/INSTALL.md) | Server setup (Docker/Compose), separate-disk storage, plugin, migration from tvbgsuite |
-| [Release / GHCR / APK](docs/RELEASE.md) | How `:latest` publishes, how to tag a release, permissions |
-| [Verify](docs/VERIFY.md) | Demo mode, no Jellyfin, no GHCR |
-| [API](docs/API.md) | Status contract + editor/ops endpoints |
+| [Reference](docs/REFERENCE.md) | Feature list, architecture, API contract, Wallpaparr vs SeerChannel |
+| [Install](docs/INSTALL.md) | Docker/Compose, separate-disk gallery, plugin, tvbgsuite migration |
+| [Release / GHCR / APK](docs/RELEASE.md) | How `:latest` publishes, tagging, permissions |
+| [Verify](docs/VERIFY.md) | Demo mode with no Jellyfin and no GHCR |
+| [API](docs/API.md) | Status contract plus editor/ops endpoints |
 | [Motion](docs/MOTION.md) | IMAGE vs VIDEO, parallax bake, intensity |
 | [Overlays](docs/OVERLAYS.md) | Clock / HA / news hooks |
-| [Projectivy plugin](docs/PROJECTIVY.md) | Pick modes, UUID, deep links (Moonfin, SeerrTV, browser fallback), all supported player clients |
-| [Changelog](CHANGELOG.md) | Full version history |
+| [Projectivy plugin](docs/PROJECTIVY.md) | Pick modes, UUID, deep links (Moonfin, SeerrTV, browser fallback) |
+| [Changelog](CHANGELOG.md) | Version history |
 
 ---
 

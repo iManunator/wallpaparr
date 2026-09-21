@@ -104,9 +104,9 @@ jobs:
 
   image:
     # Publish GHCR only on main (and tags, if this workflow ever runs there).
-    # Wait for backend + frontend so a failing test cannot push :latest.
+    # Wait for backend + frontend + plugin tests so a failing test cannot push :latest.
     # Job-level packages: write is required for docker/login-action + push.
-    needs: [backend, frontend]
+    needs: [backend, frontend, android]
     permissions:
       contents: read
       packages: write

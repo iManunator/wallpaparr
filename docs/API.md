@@ -80,17 +80,19 @@ Compatibility: `imageUrl`, `actionUrl`, and `path` are unchanged from tvbgsuite.
 | GET | `/api/demo/attribution` | Markdown attribution file. |
 | GET | `/api/queues` | Smart-queue counts for a layout |
 | GET | `/api/tonight` | Taste pick + queues + motion snapshot for the Tonight UI. Additive `preview.artworkUrl` / `preview.itemId` / `preview.layered` for the in-browser layered motion preview (not consumed by the plugin). |
-| GET | `/api/dashboard` | Health: gallery size, last cron/generate, provider config |
+| GET | `/api/dashboard` | Health: gallery size, last cron/generate, provider config. `cron.errors` lists enabled jobs whose crontab would not schedule. |
 | POST | `/api/generate` | Batch generate (`skip_existing`, `replace_existing`, `cleanup`, `motion`, `ids`, `skip_ids`) |
 | POST | `/api/jobs` | Start generate / motion / cron in a worker. Body is `{ "kind": "generate"|"motion"|"cron", …flags }`. Returns a job snapshot; poll until `done` / `error`. `409` if another job is running. |
 | GET | `/api/jobs/latest` | Latest job, or `{ "status": "idle" }` |
 | GET | `/api/jobs/{id}` | Job snapshot: `status`, `done`, `total`, `current`, `percent`, `message`, `result` |
 | POST | `/api/wallpaper/generate-motion` | Bake parallax/Ken Burns MP4s for a layout (layered plate + locked chrome). Query `path=` (filename) to bake one title (tonight’s pick). Additive `layered` / `chrome_locked` on the JSON result. |
 | POST | `/api/cron/run` | Run a cron-shaped generate immediately. Body is the job flags (layout, source, skip/replace/cleanup/ids/motion). Returns the same `{ message, created, skipped, … }` as `/api/generate`. |
-| GET/POST | `/api/settings` | Providers, cron, motion style/preset/intensity/duration/light-leak/`motion_vary`, taste profile, overlay flags, editor theme, default `title_display` |
+| GET/POST | `/api/settings` | Providers, cron, motion style/preset/intensity/duration/light-leak/`motion_vary`, taste profile, overlay flags, editor theme, default `title_display`. GET redacts provider `api_key` values (`********`); POST keeps the stored key if the field is blank or still the sentinel. |
 | POST | `/api/settings/test/{jellyfin\|jellyseerr\|tmdb}` | Connectivity |
 
 `POST /api/settings/test/{jellyfin|jellyseerr|tmdb|demo}` returns `{ ok, server?, error?, provider, message }` where `message` is toast copy (“Connected to Jellyfin (Living Room)” / “Could not reach Jellyfin: …”).
+
+Mutating routes (settings, generate, delete, cron) have no login. That's on purpose for a trusted home LAN; put auth on a reverse proxy if `:8787` is reachable off-LAN. The plugin only needs `GET /api/wallpaper/status`.
 
 `POST /api/generate` downloads artwork before compositing. For Jellyfin that is **Backdrop**, then **Primary** poster, using the same MediaBrowser token as the library call. Clearlogos come from Jellyfin **Logo**, then TMDB `images.logos` (English / null iso, PNG with alpha) for Seerr-shaped titles. Non-image bodies are skipped. Layout DNA field `title_display` is `auto` | `logo` | `text` (auto = logo if fetched, else the name). If neither image is reachable, demo titles use bundled stills; other titles fall back to the synthetic gradient. Unconfigured Jellyfin/Seerr uses the demo catalog and sets `warnings`. The JSON also includes `message`, `failed`, and `warnings` for the web UI toasts. `ids` search pulls at least 40 titles so a requested id is not missed because it sat past `limit`.
 

@@ -7,6 +7,7 @@ import android.util.Log
 import com.imanunator.wallpaparr.core.ClientIntents
 import com.imanunator.wallpaparr.core.MediaChoice
 import com.imanunator.wallpaparr.core.PreparedWallpaper
+import com.imanunator.wallpaparr.core.StatusRequest
 import com.imanunator.wallpaparr.core.UrlSupport
 import com.imanunator.wallpaparr.core.WallpaperPickModes
 import com.imanunator.wallpaparr.core.WallpaperTransition
@@ -38,21 +39,20 @@ class WallpaperProviderService : Service() {
             .create(ApiService::class.java)
     }
 
-    private fun fetchStatus(
-        api: ApiService,
-        layout: String,
-        genre: String?,
-        age: String?,
-        minYear: String?,
-        maxYear: String?,
-        minRating: Float?,
-        maxRating: Float?,
-        sort: String?,
-        pool: String?,
-        exclude: String?,
-    ): WallpaperStatus? {
+    private fun fetchStatus(api: ApiService, request: StatusRequest): WallpaperStatus? {
         val response = api.getWallpaperStatus(
-            layout, genre, age, minYear, maxYear, minRating, maxRating, sort, pool, exclude,
+            request.layout,
+            request.genre,
+            request.ageRating,
+            request.minYear,
+            request.maxYear,
+            request.minRating,
+            request.maxRating,
+            request.sort,
+            request.pool,
+            request.exclude,
+            request.profile,
+            request.queue,
         ).execute()
         if (!response.isSuccessful) return null
         val body = response.body() ?: return null
@@ -181,28 +181,45 @@ class WallpaperProviderService : Service() {
         }
         if (layoutToUse.isBlank()) return null
         var status = fetchStatus(
-            api, layoutToUse, genreFilter,
-            PreferencesManager.ageFilter.ifEmpty { null },
-            minYear, maxYear,
-            PreferencesManager.minRating.takeIf { it > 0f } ?: resolved.minRating,
-            PreferencesManager.maxRating.takeIf { it < 10f },
-            resolved.sort, resolved.pool, PreferencesManager.excludeQueryValue(),
+            api,
+            StatusRequest(
+                layout = layoutToUse,
+                genre = genreFilter,
+                ageRating = PreferencesManager.ageFilter.ifEmpty { null },
+                minYear = minYear,
+                maxYear = maxYear,
+                minRating = PreferencesManager.minRating.takeIf { it > 0f } ?: resolved.minRating,
+                maxRating = PreferencesManager.maxRating.takeIf { it < 10f },
+                sort = resolved.sort,
+                pool = resolved.pool,
+                exclude = PreferencesManager.excludeQueryValue(),
+                profile = resolved.profile,
+                queue = resolved.queue,
+            ),
         )
         if (status?.imageUrl.isNullOrBlank()) {
             // Relax filters but keep excluding the just-shown wallpaper(s) —
             // dropping exclude here would defeat no-repeat for any reason
             // other than the layout genuinely having nothing else to show.
             status = fetchStatus(
-                api, layoutToUse, null, null, null, null, null, null,
-                "random", null, PreferencesManager.excludeQueryValue(),
+                api,
+                StatusRequest(
+                    layout = layoutToUse,
+                    sort = "random",
+                    exclude = PreferencesManager.excludeQueryValue(),
+                ),
             )
         }
         if (status?.imageUrl.isNullOrBlank()) {
             for (alt in layoutPool) {
                 if (alt.equals(layoutToUse, true)) continue
                 status = fetchStatus(
-                    api, alt, null, null, null, null, null, null,
-                    "random", null, PreferencesManager.excludeQueryValue(),
+                    api,
+                    StatusRequest(
+                        layout = alt,
+                        sort = "random",
+                        exclude = PreferencesManager.excludeQueryValue(),
+                    ),
                 )
                 if (!status?.imageUrl.isNullOrBlank()) break
             }

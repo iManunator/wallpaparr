@@ -51,6 +51,7 @@ class SelectionQuery:
     pool: str | None = None
     exclude: str | None = None
     profile: str | None = None
+    taste_weights: dict[str, int] | None = None
 
 
 def _norm(value: str | None) -> str:
@@ -248,7 +249,7 @@ def select_wallpaper(
         rec, _qid = pick_taste(
             catalog,
             query.layout,
-            resolve_taste_weights(profile),
+            resolve_taste_weights(profile, query.taste_weights),
             rng=rng,
             exclude=query.exclude,
         )
