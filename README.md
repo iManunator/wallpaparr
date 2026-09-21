@@ -25,6 +25,7 @@
   <a href="#downloads">Downloads</a> ·
   <a href="#get-it-running">Get it running</a> ·
   <a href="#connect-your-library-and-generate">Connect your library</a> ·
+  <a href="#suggested-setup">Suggested setup</a> ·
   <a href="#the-tv-plugin">TV plugin</a> ·
   <a href="docs/REFERENCE.md">Full reference</a> ·
   <a href="docs/INSTALL.md">Install details</a> ·
@@ -94,13 +95,12 @@ docker run --name wallpaparr --restart unless-stopped -d -p 8787:8787 \
   ghcr.io/imanunator/wallpaparr:latest
 ```
 
-Open **http://127.0.0.1:8787** on the host. Tonight is the home page. Nothing configured yet? It seeds a demo catalog of license-safe stills so you can see it working — no Jellyfin required. Same walkthrough: **[docs/VERIFY.md](docs/VERIFY.md)**.
+Open **http://127.0.0.1:8787** on the host. Tonight is the home page — it seeds a demo catalog of license-safe stills first, no Jellyfin required.
 
-Give `PUBLIC_BASE_URL` (and the plugin's Server URL) the host's LAN IP or a hostname the TV can resolve. `127.0.0.1` / `localhost` only works from the host itself; the TV can't loop back into your laptop. Browsing the UI from the host is fine on loopback.
+- `PUBLIC_BASE_URL` (and the plugin's Server URL) needs to be a LAN IP or hostname the TV can reach — not `127.0.0.1`.
+- No login by default (fine for a home LAN). To lock it down, set `WALLPAPARR_AUTH_USER` / `WALLPAPARR_AUTH_PASSWORD` — see [docs/API.md](docs/API.md).
 
-There's no login by default. Settings, generate, and delete are open on a home LAN. Optional HTTP basic auth: set `WALLPAPARR_AUTH_USER` and `WALLPAPARR_AUTH_PASSWORD` (plugin wallpaper GETs stay open so the TV still works). Don't put `:8787` on the internet without that or a reverse proxy in front of it.
-
-Compose, building from source, or parking the gallery on a different disk: **[docs/INSTALL.md](docs/INSTALL.md)**.
+Compose, building from source, separate-disk storage, offline verify: **[docs/INSTALL.md](docs/INSTALL.md)**.
 
 ---
 
@@ -115,6 +115,25 @@ When the demo stills get old:
 5. Optional: **Settings → Cron / batch** so new/trending titles generate themselves. A bad cron expression is rejected on save instead of quietly never running.
 
 That's the loop: connect → generate → maybe schedule. Editor, taste mix, and queues only change *how* the wallpapers look and get picked.
+
+---
+
+## How it picks and bakes
+
+- **Jellyfin** pulls straight from your library — unwatched, continue watching, newly added, weighted by your taste mix.
+- **Jellyseerr** adds titles you don't have yet: Trending, Popular movies/series, or Upcoming — pick the category per batch or per cron job. Upcoming titles get an "Upcoming" badge since they're not watchable yet.
+- Every title always gets a static JPEG first. Turn on **Bake parallax / motion VIDEO** and it also renders a short H.264 loop — the artwork pans/zooms gently while the title, rating, and badges stay locked in place. Projectivy plays the VIDEO when one exists and falls back to the JPEG otherwise, so baking is always optional, never required.
+
+---
+
+## Suggested setup
+
+1. **Test before you automate.** Run **Generate** by hand a couple of times with a small `limit` (5–10), trying different **motion presets** in Settings, and check the result in Gallery/Tonight. Pick what looks good on your TV *before* scheduling — re-baking hundreds of titles because a preset looked wrong wastes time.
+2. **Then add cron schedules** (Settings → Cron / batch). A reasonable starting point is three:
+   - **Jellyfin**, nightly — `skip_existing` on, `refresh_status` on (keeps watched/continue-watching badges current), `cleanup` on to drop titles removed from your library.
+   - **Jellyseerr — Trending**, daily — `Full refresh every run` on, since what's trending changes day to day.
+   - **Jellyseerr — Upcoming**, weekly is usually enough — release dates don't move that often.
+3. Only bake motion on schedules where you actually want the loop; it's the slow, CPU-heavy step, so leave it off elsewhere.
 
 ---
 
@@ -154,5 +173,6 @@ Package `com.imanunator.wallpaparr`. Pick modes and deep links: [docs/PROJECTIVY
 
 - Projectivy wallpaper plugin contract: [spocky/projectivy-plugin-wallpaper-provider](https://github.com/spocky/projectivy-plugin-wallpaper-provider)
 - Prior WebGUI work: [androidtvbackgroundWebGui](https://github.com/iManunator/androidtvbackgroundWebGui)
+- Original plugin this suite grew out of: [adelatour11/androidtvbackground](https://github.com/adelatour11/androidtvbackground)
 
 MIT © 2026 iManunator
