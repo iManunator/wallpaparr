@@ -204,6 +204,8 @@ function GeneratePage() {
           <label style={{ marginTop: 12 }}>Limit</label>
           <input
             type="number"
+            min={1}
+            max={200}
             value={form.limit}
             onChange={(e) => setForm({ ...form, limit: Number(e.target.value) })}
           />
@@ -261,7 +263,7 @@ function GeneratePage() {
                     layout: form.layout,
                     source: form.source,
                     seerr_category: form.seerr_category,
-                    limit: form.limit,
+                    limit: Math.min(200, Math.max(1, Number(form.limit) || 8)),
                     skip_existing: form.skip_existing,
                     replace_existing: form.replace_existing,
                     refresh_status: form.refresh_status,
@@ -819,7 +821,13 @@ function SettingsPage({ onTheme }: { onTheme: (theme: string) => void }) {
                 <option value="all">all</option>
               </select>
               <label>Limit</label>
-              <input type="number" value={Number(cron.limit || 20)} onChange={(e) => setCronAt(index, { ...cron, limit: Number(e.target.value) })} />
+              <input
+                type="number"
+                min={1}
+                max={200}
+                value={Number(cron.limit || 20)}
+                onChange={(e) => setCronAt(index, { ...cron, limit: Number(e.target.value) })}
+              />
               <label>Only ids (comma)</label>
               <input
                 value={Array.isArray(cron.ids) ? cron.ids.join(",") : String(cron.ids || "")}
@@ -930,7 +938,7 @@ function SettingsPage({ onTheme }: { onTheme: (theme: string) => void }) {
                       layout: cron.layout,
                       source: cron.source,
                       seerr_category: cron.seerr_category,
-                      limit: cron.limit,
+                      limit: Math.min(200, Math.max(1, Number(cron.limit) || 20)),
                       skip_existing: cron.skip_existing,
                       replace_existing: cron.replace_existing,
                       refresh_status: cron.refresh_status,

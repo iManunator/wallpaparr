@@ -787,7 +787,12 @@ def test_optional_auth_protects_mutating_routes(client, monkeypatch):
     monkeypatch.setenv("WALLPAPARR_AUTH_USER", "admin")
     monkeypatch.setenv("WALLPAPARR_AUTH_PASSWORD", "s3cret")
     assert client.get("/api/health").status_code == 200
+    assert client.head("/api/health").status_code == 200
+    slash = client.get("/api/health/", follow_redirects=False)
+    assert slash.status_code in {200, 307, 308}
     assert client.get("/api/wallpaper/status", params={"layout": "Netflix Hero"}).status_code == 200
+    assert client.get("/api/wallpaper/image/Netflix Hero/northlight.jpg").status_code == 200
+    assert client.head("/api/wallpaper/image/Netflix Hero/northlight.jpg").status_code == 200
     assert client.get("/api/layouts/list").status_code == 200
     assert client.get("/api/settings").status_code == 401
     assert client.post("/api/generate", json={"layout": "Netflix Hero", "source": "demo", "limit": 1}).status_code == 401

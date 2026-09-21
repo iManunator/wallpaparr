@@ -73,7 +73,7 @@ Compatibility: `imageUrl`, `actionUrl`, and `path` are unchanged from tvbgsuite.
 | DELETE | `/api/gallery/{id}` | Remove one still + companion MP4 / plate / chrome; updates catalog. Also `POST /api/gallery/delete/{id}`. |
 | POST | `/api/gallery/delete` | Bulk `{ "ids": ["…"] }`. Returns `{ deleted, missing, files, titles, message }`. `{ "all": true, "include_pins": false }` is an alias for delete-all. |
 | POST | `/api/gallery/delete-all` | Clear the library. Default **skips pinned** stills. Body `{ "include_pins": false, "layout": "Netflix Hero" }`. Empty gallery returns `200` with `count: 0` and `message: "Gallery is already empty."` Pins are listed in `skipped_pinned` / `pinned_kept`. Additive — does not change `/api/wallpaper/status` or list endpoints. |
-| GET | `/api/media` | Live items from `source` (`demo`, `jellyfin`, `jellyseerr`). Query `limit`. |
+| GET | `/api/media` | Live items from `source` (`demo`, `jellyfin`, `jellyseerr`). Query `limit` is 1–40 (default 12). |
 | GET | `/api/media/artwork/{item_id}` | Demo stills (NASA/NARA/LoC + CC BY-SA Kew) or Jellyfin Backdrop/Primary. Query `kind=backdrop` (default) or `kind=poster`. Sniffs magic bytes; 404 if Jellyfin is unset and the id is not a demo still. |
 | GET | `/api/media/logo/{item_id}` | Clearlogo proxy: demo PNG (Northlight), Jellyfin `Images/Logo` (MediaBrowser / X-Emby-Token), or TMDB `logos` (`tmdb_id`, `media_type`). Rejects non-images; 404 when missing so the UI can fall back to title text. |
 | GET | `/api/demo/catalog` | License, artist, Commons URL for each demo still. |

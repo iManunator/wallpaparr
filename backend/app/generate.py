@@ -127,9 +127,10 @@ def _dedupe(items: list[MediaItem]) -> list[MediaItem]:
 
 
 def _filename_for(item: MediaItem) -> str:
-    slug = "".join(ch if ch.isalnum() else "-" for ch in item.title.lower()).strip("-")
-    suffix = item.jellyfin_id or item.tmdb_id or item.imdb_id or uuid.uuid4().hex[:8]
-    return f"{slug[:40]}-{suffix}.jpg"
+    slug = "".join(ch if ch.isalnum() else "-" for ch in item.title.lower()).strip("-") or "untitled"
+    raw_id = str(item.jellyfin_id or item.tmdb_id or item.imdb_id or "")
+    suffix = "".join(ch if ch.isalnum() else "-" for ch in raw_id).strip("-") or uuid.uuid4().hex[:8]
+    return f"{slug[:40]}-{suffix[:80]}.jpg"
 
 
 def _artwork_urls(item: MediaItem) -> list[str]:
@@ -351,6 +352,9 @@ def generate_one(
     image = apply_overlays(render_still(item, layout, backdrop_bytes=backdrop_bytes, logo_bytes=logo_bytes), settings)
     filename = _filename_for(item)
     dest: Path = catalog_store.layout_dir(layout_name) / filename
+    folder_resolved = dest.parent.resolve()
+    if not dest.resolve().is_relative_to(folder_resolved):
+        raise ValueError("Invalid filename")
     save_jpeg(image, dest)
     # Drop matching catalog rows only after the new JPEG is on disk. Deleting
     # first meant a render/fetch failure wiped the previous still. ``replace``

@@ -620,6 +620,27 @@ describe("App smoke", () => {
     fireEvent.click(screen.getByRole("button", { name: "Test Jellyfin" }));
     expect((await screen.findAllByText(/Connected to Jellyfin/)).length).toBeGreaterThan(0);
   });
+
+  it("clamps generate limit to 200 before posting a job", async () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+    expect(await screen.findByRole("heading", { name: "Generate" })).toBeInTheDocument();
+    fireEvent.change(screen.getByDisplayValue("8"), { target: { value: "5000" } });
+    const fetchMock = vi.mocked(fetch);
+    const before = fetchMock.mock.calls.length;
+    fireEvent.click(screen.getByRole("button", { name: "Run batch" }));
+    expect((await screen.findAllByText(/Created 2 stills/)).length).toBeGreaterThan(0);
+    const posted = fetchMock.mock.calls.slice(before).flatMap(([, init]) => {
+      if (!init || String(init.method || "").toUpperCase() !== "POST") return [];
+      try {
+        return [JSON.parse(String(init.body || "{}"))];
+      } catch {
+        return [];
+      }
+    });
+    const generate = posted.find((payload) => payload.kind === "generate");
+    expect(generate?.limit).toBe(200);
+  });
 });
 
 async function openGallery() {

@@ -7,10 +7,12 @@
 - Jellyfin API keys are attached only when the artwork URL's origin matches the configured server — a lookalike host no longer receives the MediaBrowser token.
 - Catalog/settings/ops atomic writes use unique temp names (no same-pid collision) and fsync before rename.
 - `MotionProfile()` encode defaults now match `AppSettings` (24 fps, 15s, balanced intensity, fly-in on, 1.0s edge fade).
-- HTTP fetches reject non-http(s) URLs and cap response size. Generate `limit` is 1–200.
+- HTTP fetches reject non-http(s) URLs and cap response size. Generate `limit` is 1–200. Cross-host redirects drop `Authorization` / `X-Emby-Token` / `X-Api-Key`; JSON bodies are streamed against the same size cap as artwork.
+- Generate filenames sanitize provider ids so a `jellyfin_id` like `../../etc/passwd` cannot write outside the layout folder.
 - Cron generate failures are recorded on the dashboard (`cron.last.ok: false`) instead of only raising in the scheduler thread.
-- Optional HTTP basic auth via `WALLPAPARR_AUTH_USER` / `WALLPAPARR_AUTH_PASSWORD` (plugin wallpaper GETs stay open). Compose documents optional `PUID`/`PGID` (default 0:0).
-- Docs: POST blank API key clears (does not keep); ids search pulls 200 titles, not 40.
+- Optional HTTP basic auth via `WALLPAPARR_AUTH_USER` / `WALLPAPARR_AUTH_PASSWORD` (plugin wallpaper GETs — including HEAD and trailing-slash health — stay open). Compose documents optional `PUID`/`PGID` (default 0:0).
+- Generate/cron UI clamps `limit` to 1–200 so the form cannot 422 against the API cap.
+- Docs: POST blank API key clears (does not keep); ids search pulls 200 titles, not 40; `GET /api/media` `limit` is 1–40.
 
 - Motion bake fallbacks now match `AppSettings` (24 fps, balanced, 15s loop, fly-in on) instead of the old 30 fps / cinematic / quality-duration tables when a field is missing.
 - Invalid cron expressions are rejected on save and listed on the dashboard instead of being skipped with no warning.

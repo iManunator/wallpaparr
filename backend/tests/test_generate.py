@@ -527,3 +527,42 @@ def test_regenerate_does_not_duplicate_catalog_rows(suite_dirs):
     rows = [rec for rec in load_catalog() if rec.jellyfin_id == "jf-once"]
     assert len(rows) == 1
 
+
+def test_filename_for_strips_path_characters():
+    from pathlib import Path
+
+    from app.generate import _filename_for
+
+    name = _filename_for(
+        MediaItem(title="../etc/passwd", jellyfin_id="../../etc/passwd", source="jellyfin")
+    )
+    assert name == Path(name).name
+    assert "/" not in name
+    assert "\\" not in name
+    assert ".." not in name
+    assert name.endswith(".jpg")
+
+
+def test_generate_one_confines_path_chars_in_ids(suite_dirs):
+    from pathlib import Path
+
+    from app.generate import generate_one
+    from app.models import MediaItem
+
+    item = MediaItem(
+        title="Escape",
+        jellyfin_id="../../etc/passwd",
+        source="jellyfin",
+        backdrop_url="http://jf:8096/Items/evil/Images/Backdrop",
+    )
+    record = generate_one(item, "Netflix Hero", http_get=lambda _url: _jpeg((18, 22, 30)))
+    assert record is not None
+    layout = suite_dirs["gallery"] / "Netflix Hero"
+    dest = layout / record.filename
+    assert dest.is_file()
+    assert dest.resolve().is_relative_to(layout.resolve())
+    assert record.filename == Path(record.filename).name
+    assert not (suite_dirs["gallery"] / "etc").exists()
+    assert "passwd" in record.filename
+
+

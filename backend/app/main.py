@@ -43,11 +43,13 @@ def auth_credentials() -> tuple[str, str]:
 
 
 def auth_is_public(method: str, path: str) -> bool:
-    if method.upper() != "GET":
+    if method.upper() not in {"GET", "HEAD"}:
         return False
-    if path in _PLUGIN_GET_EXACT:
+    # Image URLs are what Projectivy actually plays; must stay reachable
+    # without a password even when the UI is gated.
+    if path.startswith("/api/wallpaper/image/"):
         return True
-    return path.startswith("/api/wallpaper/image/")
+    return path.rstrip("/") in _PLUGIN_GET_EXACT
 
 
 def _unauthorized() -> Response:
