@@ -133,7 +133,7 @@ That's the loop: connect → generate → maybe schedule. Editor, taste mix, and
    - **Jellyfin**, nightly — `skip_existing` on, `refresh_status` on (keeps watched/continue-watching badges current), `cleanup` on to drop titles removed from your library.
    - **Jellyseerr — Trending**, daily — `Full refresh every run` on, since what's trending changes day to day.
    - **Jellyseerr — Upcoming**, weekly is usually enough — release dates don't move that often.
-3. Only bake motion on schedules where you actually want the loop; it's the slow, CPU-heavy step, so leave it off elsewhere.
+3. Only bake motion on schedules where you actually want the loop; it's the slow, CPU-heavy step, so leave it off elsewhere and schedule the ones that do bake it overnight (e.g. `0 4 * * *`) when nobody minds the CPU load.
 
 ---
 
@@ -173,6 +173,6 @@ Package `com.imanunator.wallpaparr`. Pick modes and deep links: [docs/PROJECTIVY
 
 - Projectivy wallpaper plugin contract: [spocky/projectivy-plugin-wallpaper-provider](https://github.com/spocky/projectivy-plugin-wallpaper-provider)
 - Prior WebGUI work: [androidtvbackgroundWebGui](https://github.com/iManunator/androidtvbackgroundWebGui)
-- Original plugin this suite grew out of: [adelatour11/androidtvbackground](https://github.com/adelatour11/androidtvbackground)
+- Initial idea: [adelatour11/androidtvbackground](https://github.com/adelatour11/androidtvbackground)
 
 MIT © 2026 iManunator
