@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from pathlib import Path
+
+from app import __version__
+
 
 def test_health(client):
     response = client.get("/api/health")
@@ -7,13 +11,9 @@ def test_health(client):
     body = response.json()
     assert body["ok"] is True
     assert body["service"] == "wallpaparr"
-    from app import __version__
-    from pathlib import Path
-
     version_file = Path(__file__).resolve().parents[2] / "VERSION"
     assert body["version"] == __version__
     assert body["version"] == version_file.read_text(encoding="utf-8").strip()
-    assert body["version"] == "1.0.0"
 
 
 def test_layouts_list_includes_presets(client):
